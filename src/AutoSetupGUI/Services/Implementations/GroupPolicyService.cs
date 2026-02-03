@@ -3,6 +3,7 @@ using AutoSetupGUI.Models;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TaskStatus = AutoSetupGUI.Models.TaskStatus;
 
 namespace AutoSetupGUI.Services.Implementations;
 

@@ -25,18 +25,21 @@ public class WmiHelper
 
         _logger.LogDebug("Executing WMI query: {Query} in namespace {Namespace}", query, scope);
 
+        List<ManagementObject> results;
         try
         {
             using var searcher = new ManagementObjectSearcher(scope, query);
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                yield return obj;
-            }
+            results = searcher.Get().Cast<ManagementObject>().ToList();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing WMI query: {Query}", query);
             throw;
+        }
+
+        foreach (var obj in results)
+        {
+            yield return obj;
         }
     }
 
@@ -50,18 +53,21 @@ public class WmiHelper
 
         _logger.LogDebug("Executing WMI query: {Query} in namespace {Namespace}", query, scope);
 
+        List<ManagementObject> results;
         try
         {
             using var searcher = new ManagementObjectSearcher(scope, query);
-            foreach (ManagementObject obj in searcher.Get())
-            {
-                yield return obj;
-            }
+            results = searcher.Get().Cast<ManagementObject>().ToList();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing WMI query: {Query}", query);
             throw;
+        }
+
+        foreach (var obj in results)
+        {
+            yield return obj;
         }
     }
 

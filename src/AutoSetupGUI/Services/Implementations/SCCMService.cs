@@ -1,9 +1,11 @@
+using System.IO;
 using System.Management;
 using AutoSetupGUI.Infrastructure;
 using AutoSetupGUI.Models;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using TaskStatus = AutoSetupGUI.Models.TaskStatus;
 
 namespace AutoSetupGUI.Services.Implementations;
 
@@ -181,7 +183,7 @@ public class SCCMService : ISCCMService
             {
                 try
                 {
-                    using var scope = new ManagementScope(SCCM_WMI_NAMESPACE);
+                    var scope = new ManagementScope(SCCM_WMI_NAMESPACE);
                     scope.Connect();
 
                     using var clientClass = new ManagementClass(scope, new ManagementPath("SMS_Client"), null);

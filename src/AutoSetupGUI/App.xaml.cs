@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using AutoSetupGUI.Services;
 using AutoSetupGUI.Services.Interfaces;
 using AutoSetupGUI.Services.Implementations;
 using AutoSetupGUI.ViewModels;

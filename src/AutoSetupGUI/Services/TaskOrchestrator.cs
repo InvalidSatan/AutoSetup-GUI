@@ -1,7 +1,10 @@
+using System.IO;
 using AutoSetupGUI.Infrastructure;
 using AutoSetupGUI.Models;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using TaskStatus = AutoSetupGUI.Models.TaskStatus;
+using LogLevel = AutoSetupGUI.Models.LogLevel;
 
 namespace AutoSetupGUI.Services;
 

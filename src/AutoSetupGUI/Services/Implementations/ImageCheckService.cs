@@ -1,3 +1,4 @@
+using System.IO;
 using AutoSetupGUI.Infrastructure;
 using AutoSetupGUI.Models;
 using AutoSetupGUI.Services.Interfaces;
