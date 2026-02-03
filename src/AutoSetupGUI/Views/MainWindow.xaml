@@ -1,0 +1,126 @@
+<Window x:Class="AutoSetupGUI.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:AutoSetupGUI.Views"
+        mc:Ignorable="d"
+        Title="University Auto Setup v3.0"
+        Height="800" Width="1200"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Background="{StaticResource BackgroundBrush}">
+
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Close" Executed="Close_Executed"/>
+    </Window.CommandBindings>
+
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="NavigationCommands.Refresh"/>
+        <KeyBinding Modifiers="Ctrl" Key="Q" Command="ApplicationCommands.Close"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Navigation Panel -->
+        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header/Logo -->
+                <Border Grid.Row="0" Background="{StaticResource UniversityBlueBrush}" Padding="16">
+                    <StackPanel>
+                        <TextBlock Text="University" FontSize="12" Foreground="White" Opacity="0.8"/>
+                        <TextBlock Text="Auto Setup" FontSize="22" FontWeight="Bold" Foreground="White"/>
+                        <TextBlock Text="v3.0" FontSize="11" Foreground="White" Opacity="0.7" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Navigation Buttons -->
+                <StackPanel Grid.Row="1" Margin="8,16,8,8">
+                    <RadioButton x:Name="NavDashboard"
+                                 Content="Dashboard"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 IsChecked="True"
+                                 Checked="NavDashboard_Checked"/>
+
+                    <RadioButton x:Name="NavSystemInfo"
+                                 Content="System Info"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavSystemInfo_Checked"
+                                 Margin="0,4,0,0"/>
+
+                    <RadioButton x:Name="NavTasks"
+                                 Content="Tasks"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavTasks_Checked"
+                                 Margin="0,4,0,0"/>
+
+                    <RadioButton x:Name="NavLogs"
+                                 Content="Log Viewer"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavLogs_Checked"
+                                 Margin="0,4,0,0"/>
+
+                    <Separator Margin="0,16"/>
+
+                    <RadioButton x:Name="NavSettings"
+                                 Content="Settings"
+                                 Style="{StaticResource NavButtonStyle}"
+                                 Checked="NavSettings_Checked"/>
+                </StackPanel>
+
+                <!-- Status Bar -->
+                <Border Grid.Row="2" Background="#F8F8F8" Padding="12,8">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Ellipse x:Name="NetworkIndicator" Width="8" Height="8" Fill="#107C10" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="NetworkStatus" Text="Network: Connected" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="PDriveIndicator" Width="8" Height="8" Fill="#107C10" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="PDriveStatus" Text="P:\ Drive: Available" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- Main Content Area -->
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Quick Actions Toolbar -->
+            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}" Padding="20,12">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="Quick Actions:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,16,0"/>
+
+                    <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                        <Button x:Name="BtnRunAll" Content="Run All" Style="{StaticResource PrimaryButtonStyle}" Click="BtnRunAll_Click" Margin="0,0,8,0"/>
+                        <Button x:Name="BtnCopyInfo" Content="Copy Info" Style="{StaticResource SecondaryButtonStyle}" Click="BtnCopyInfo_Click" Margin="0,0,8,0"/>
+                        <Button x:Name="BtnExport" Content="Export" Style="{StaticResource SecondaryButtonStyle}" Click="BtnExport_Click" Margin="0,0,8,0"/>
+                        <Button x:Name="BtnRefresh" Content="Refresh" Style="{StaticResource SecondaryButtonStyle}" Click="BtnRefresh_Click"/>
+                    </StackPanel>
+
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <CheckBox x:Name="ChkDarkMode" Content="Dark Mode" Style="{StaticResource ModernCheckBoxStyle}" VerticalAlignment="Center" IsEnabled="False"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Content Frame -->
+            <Frame x:Name="ContentFrame" Grid.Row="1" NavigationUIVisibility="Hidden" Margin="20"/>
+        </Grid>
+    </Grid>
+</Window>

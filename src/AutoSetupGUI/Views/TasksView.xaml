@@ -1,0 +1,181 @@
+<Page x:Class="AutoSetupGUI.Views.TasksView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      Title="Tasks"
+      Background="Transparent">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Page Header -->
+        <DockPanel Grid.Row="0" Margin="0,0,0,20">
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button x:Name="BtnRunAll" Content="Run All Selected" Style="{StaticResource PrimaryButtonStyle}"
+                        Click="BtnRunAll_Click"/>
+            </StackPanel>
+            <TextBlock Text="Tasks" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center"/>
+        </DockPanel>
+
+        <!-- Progress Section -->
+        <Border Grid.Row="1" x:Name="ProgressSection" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Visibility="Collapsed">
+            <StackPanel>
+                <TextBlock x:Name="TxtProgressStatus" Text="Running setup..." FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <ProgressBar x:Name="ProgressBar" Style="{StaticResource ModernProgressBarStyle}" Value="0"/>
+                <TextBlock x:Name="TxtProgressDetail" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Task Cards -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Group Policy Update -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox x:Name="ChkGroupPolicy" Grid.Column="0" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Group Policy Update" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="Runs gpupdate /force to refresh all Group Policies" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Border x:Name="StatusGP" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                    <TextBlock x:Name="TxtStatusGP" Text="Pending" FontSize="12"/>
+                                </Border>
+                                <TextBlock x:Name="TxtDurationGP" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="2" x:Name="BtnRunGP" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                                Click="BtnRunGP_Click" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- SCCM Client Actions -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <CheckBox x:Name="ChkSCCM" Grid.Column="0" IsChecked="True" VerticalAlignment="Top" Margin="0,4,16,0"/>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="SCCM Client Actions" FontWeight="SemiBold" FontSize="16"/>
+                                <TextBlock Text="Triggers SCCM client actions for policy and inventory updates" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Border x:Name="StatusSCCM" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                        <TextBlock x:Name="TxtStatusSCCM" Text="Pending" FontSize="12"/>
+                                    </Border>
+                                    <TextBlock x:Name="TxtDurationSCCM" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Button Grid.Column="2" x:Name="BtnRunSCCM" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="BtnRunSCCM_Click" VerticalAlignment="Top"/>
+                        </Grid>
+
+                        <!-- SCCM Sub-Actions -->
+                        <ItemsControl x:Name="SCCMActionsList" Margin="40,12,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                        <Border Grid.Column="1" CornerRadius="4" Padding="8,2" Background="{StaticResource PendingBackgroundBrush}">
+                                            <TextBlock Text="Pending" FontSize="11"/>
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <!-- Dell Command Update -->
+                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox x:Name="ChkDell" Grid.Column="0" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Dell Command Update" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock x:Name="TxtDellDescription" Text="Install and run Dell updates (Dell systems only)"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Border x:Name="StatusDell" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                    <TextBlock x:Name="TxtStatusDell" Text="Pending" FontSize="12"/>
+                                </Border>
+                                <TextBlock x:Name="TxtDurationDell" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="2" x:Name="BtnRunDell" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                                Click="BtnRunDell_Click" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+
+                <!-- Image Checks -->
+                <Border Style="{StaticResource CardStyle}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <CheckBox x:Name="ChkImageChecks" Grid.Column="0" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Image Verification Checks" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="Verify Windows activation, domain, SCCM, disk space, network, and BitLocker"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Border x:Name="StatusChecks" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                    <TextBlock x:Name="TxtStatusChecks" Text="Pending" FontSize="12"/>
+                                </Border>
+                                <TextBlock x:Name="TxtDurationChecks" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <Button Grid.Column="2" x:Name="BtnRunChecks" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                                Click="BtnRunChecks_Click" VerticalAlignment="Center"/>
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Bottom Status Bar -->
+        <Border Grid.Row="3" Background="#F8F8F8" Padding="16,12" Margin="0,16,0,0" CornerRadius="4">
+            <DockPanel>
+                <Button DockPanel.Dock="Right" x:Name="BtnViewReport" Content="View Report" Style="{StaticResource SecondaryButtonStyle}"
+                        Click="BtnViewReport_Click" Visibility="Collapsed"/>
+                <TextBlock x:Name="TxtFinalStatus" Text="Select tasks and click 'Run All Selected' to begin"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Page>

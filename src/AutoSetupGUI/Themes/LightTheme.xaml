@@ -1,0 +1,13 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Light Theme Overrides -->
+    <Color x:Key="WindowBackgroundColor">#F5F5F5</Color>
+    <Color x:Key="NavigationBackgroundColor">#FFFFFF</Color>
+    <Color x:Key="ContentBackgroundColor">#FFFFFF</Color>
+
+    <SolidColorBrush x:Key="WindowBackgroundBrush" Color="{StaticResource WindowBackgroundColor}"/>
+    <SolidColorBrush x:Key="NavigationBackgroundBrush" Color="{StaticResource NavigationBackgroundColor}"/>
+    <SolidColorBrush x:Key="ContentBackgroundBrush" Color="{StaticResource ContentBackgroundColor}"/>
+
+</ResourceDictionary>
