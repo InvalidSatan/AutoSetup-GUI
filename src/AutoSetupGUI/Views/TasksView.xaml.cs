@@ -5,6 +5,7 @@ using AutoSetupGUI.Models;
 using AutoSetupGUI.Services;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using TaskStatus = AutoSetupGUI.Models.TaskStatus;
 
 namespace AutoSetupGUI.Views;
 

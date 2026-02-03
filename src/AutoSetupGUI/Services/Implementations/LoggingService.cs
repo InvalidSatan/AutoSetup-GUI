@@ -3,6 +3,7 @@ using AutoSetupGUI.Models;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using LogLevel = AutoSetupGUI.Models.LogLevel;
 
 namespace AutoSetupGUI.Services.Implementations;
 
