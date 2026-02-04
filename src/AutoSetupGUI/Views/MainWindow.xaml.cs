@@ -14,6 +14,13 @@ public partial class MainWindow : Window
     private readonly ISystemInfoService _systemInfoService;
     private readonly ILoggingService _loggingService;
 
+    // Cache views to preserve state when switching tabs
+    private DashboardView? _dashboardView;
+    private SystemInfoView? _systemInfoView;
+    private TasksView? _tasksView;
+    private LogViewerView? _logViewerView;
+    private SettingsView? _settingsView;
+
     public MainWindow()
     {
         InitializeComponent();
@@ -47,8 +54,9 @@ public partial class MainWindow : Window
         // Check network status
         UpdateNetworkStatus();
 
-        // Navigate to dashboard
-        ContentFrame.Navigate(new DashboardView());
+        // Navigate to dashboard (use cached instance)
+        _dashboardView = new DashboardView();
+        ContentFrame.Navigate(_dashboardView);
     }
 
     private void UpdateNetworkStatus()
@@ -81,36 +89,40 @@ public partial class MainWindow : Window
 
     private void NavDashboard_Checked(object sender, RoutedEventArgs e)
     {
-        ContentFrame?.Navigate(new DashboardView());
+        _dashboardView ??= new DashboardView();
+        ContentFrame?.Navigate(_dashboardView);
     }
 
     private void NavSystemInfo_Checked(object sender, RoutedEventArgs e)
     {
-        ContentFrame?.Navigate(new SystemInfoView());
+        _systemInfoView ??= new SystemInfoView();
+        ContentFrame?.Navigate(_systemInfoView);
     }
 
     private void NavTasks_Checked(object sender, RoutedEventArgs e)
     {
-        ContentFrame?.Navigate(new TasksView());
+        _tasksView ??= new TasksView();
+        ContentFrame?.Navigate(_tasksView);
     }
 
     private void NavLogs_Checked(object sender, RoutedEventArgs e)
     {
-        ContentFrame?.Navigate(new LogViewerView());
+        _logViewerView ??= new LogViewerView();
+        ContentFrame?.Navigate(_logViewerView);
     }
 
     private void NavSettings_Checked(object sender, RoutedEventArgs e)
     {
-        ContentFrame?.Navigate(new SettingsView());
+        _settingsView ??= new SettingsView();
+        ContentFrame?.Navigate(_settingsView);
     }
 
     private void BtnRunAll_Click(object sender, RoutedEventArgs e)
     {
         NavTasks.IsChecked = true;
-        if (ContentFrame.Content is TasksView tasksView)
-        {
-            tasksView.RunAllTasks();
-        }
+        // Use cached tasks view
+        _tasksView ??= new TasksView();
+        _tasksView.RunAllTasks();
     }
 
     private async void BtnCopyInfo_Click(object sender, RoutedEventArgs e)

@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Windows;
 using AutoSetupGUI.Models;
 using AutoSetupGUI.Services.Interfaces;
+using AutoSetupGUI.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using QuestPDF.Fluent;
@@ -554,5 +556,30 @@ public class ReportService : IReportService
     public void OpenInBrowser(string filePath)
     {
         OpenReport(filePath);
+    }
+
+    /// <summary>
+    /// Shows the PDF report in a built-in viewer window (avoids Edge first-run experience).
+    /// </summary>
+    public void ShowReportViewer(string filePath, bool requiresRestart = false)
+    {
+        try
+        {
+            _logger.LogInformation("Opening report viewer for: {FilePath}, RequiresRestart: {RequiresRestart}",
+                filePath, requiresRestart);
+
+            // Must run on UI thread
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                var viewer = new PdfViewerWindow(filePath, requiresRestart);
+                viewer.Show();
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error opening report viewer: {FilePath}", filePath);
+            // Fall back to shell open
+            OpenReport(filePath);
+        }
     }
 }

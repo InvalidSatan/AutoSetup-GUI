@@ -48,4 +48,9 @@ public interface IReportService
     /// Opens the report in the default browser (for HTML files).
     /// </summary>
     void OpenInBrowser(string filePath);
+
+    /// <summary>
+    /// Shows the PDF report in a built-in viewer window (avoids Edge first-run).
+    /// </summary>
+    void ShowReportViewer(string filePath, bool requiresRestart = false);
 }

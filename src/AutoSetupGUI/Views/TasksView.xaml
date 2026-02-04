@@ -112,30 +112,70 @@
 
                 <!-- Dell Command Update -->
                 <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
 
-                        <CheckBox x:Name="ChkDell" Grid.Column="0" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                            <CheckBox x:Name="ChkDell" Grid.Column="0" IsChecked="True" VerticalAlignment="Top" Margin="0,4,16,0"/>
 
-                        <StackPanel Grid.Column="1">
-                            <TextBlock Text="Dell Command Update" FontWeight="SemiBold" FontSize="16"/>
-                            <TextBlock x:Name="TxtDellDescription" Text="Install and run Dell updates (Dell systems only)"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <Border x:Name="StatusDell" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
-                                    <TextBlock x:Name="TxtStatusDell" Text="Pending" FontSize="12"/>
-                                </Border>
-                                <TextBlock x:Name="TxtDurationDell" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Dell Command Update" FontWeight="SemiBold" FontSize="16"/>
+                                <TextBlock x:Name="TxtDellDescription" Text="Install and run Dell updates (Dell systems only)"
+                                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                    <Border x:Name="StatusDell" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                        <TextBlock x:Name="TxtStatusDell" Text="Pending" FontSize="12"/>
+                                    </Border>
+                                    <TextBlock x:Name="TxtDurationDell" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
 
-                        <Button Grid.Column="2" x:Name="BtnRunDell" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
-                                Click="BtnRunDell_Click" VerticalAlignment="Center"/>
-                    </Grid>
+                            <Button Grid.Column="2" x:Name="BtnRunDell" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="BtnRunDell_Click" VerticalAlignment="Top"/>
+                        </Grid>
+
+                        <!-- DCU Progress Details Panel -->
+                        <Border x:Name="DellProgressPanel" Visibility="Collapsed" Background="#F8F9FA" CornerRadius="4" Margin="40,12,0,0" Padding="12">
+                            <StackPanel>
+                                <!-- Current Phase -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Phase:" FontWeight="SemiBold" Width="80"/>
+                                    <TextBlock x:Name="TxtDellPhase" Text="Initializing..." Foreground="{StaticResource InfoBrush}"/>
+                                </StackPanel>
+
+                                <!-- Progress Bar for DCU -->
+                                <Grid Margin="0,0,0,8">
+                                    <ProgressBar x:Name="DellProgressBar" Height="8" Value="0" Maximum="100"
+                                                 Style="{StaticResource ModernProgressBarStyle}"/>
+                                </Grid>
+
+                                <!-- Updates Found/Applied Counter -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                    <TextBlock Text="Updates:" FontWeight="SemiBold" Width="80"/>
+                                    <TextBlock x:Name="TxtDellUpdatesCount" Text="Scanning..." Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </StackPanel>
+
+                                <!-- Current Activity -->
+                                <TextBlock x:Name="TxtDellCurrentActivity" Text="" TextWrapping="Wrap"
+                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+
+                                <!-- Live Log Output (scrollable) -->
+                                <Expander Header="View Live Output" Margin="0,8,0,0" IsExpanded="False">
+                                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="0,8,0,0">
+                                        <ScrollViewer x:Name="DellLogScroller" Height="150" VerticalScrollBarVisibility="Auto">
+                                            <TextBox x:Name="TxtDellLiveLog" IsReadOnly="True" BorderThickness="0"
+                                                     FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"
+                                                     Background="Transparent" Padding="8"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Expander>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
                 </Border>
 
                 <!-- Image Checks -->

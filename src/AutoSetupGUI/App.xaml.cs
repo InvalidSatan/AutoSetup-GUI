@@ -68,32 +68,75 @@ public partial class App : Application
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         var exception = e.ExceptionObject as Exception;
-        Log.Error(exception, "Unhandled domain exception");
 
-        MessageBox.Show(
-            $"An unexpected error occurred:\n\n{exception?.Message}\n\nThe application will continue running.",
-            "Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        // Log safely - network might be down
+        try { Log.Error(exception, "Unhandled domain exception"); } catch { }
+
+        // Only show message box if not a network-related error (which might cascade)
+        if (!IsNetworkRelatedError(exception))
+        {
+            try
+            {
+                MessageBox.Show(
+                    $"An unexpected error occurred:\n\n{exception?.Message}\n\nThe application will continue running.",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch { /* UI might not be available */ }
+        }
     }
 
     private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
     {
-        Log.Error(e.Exception, "Unhandled dispatcher exception");
+        // Log safely - network might be down
+        try { Log.Error(e.Exception, "Unhandled dispatcher exception"); } catch { }
 
-        MessageBox.Show(
-            $"An unexpected error occurred:\n\n{e.Exception.Message}\n\nThe application will continue running.",
-            "Error",
-            MessageBoxButton.OK,
-            MessageBoxImage.Error);
+        // Don't crash - always handle it
+        e.Handled = true;
 
-        e.Handled = true; // Prevent crash
+        // Only show message box if not a network-related error
+        if (!IsNetworkRelatedError(e.Exception))
+        {
+            try
+            {
+                MessageBox.Show(
+                    $"An unexpected error occurred:\n\n{e.Exception.Message}\n\nThe application will continue running.",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            catch { /* UI might not be available */ }
+        }
     }
 
     private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        Log.Error(e.Exception, "Unobserved task exception");
-        e.SetObserved(); // Prevent crash
+        // Log safely
+        try { Log.Error(e.Exception, "Unobserved task exception"); } catch { }
+        e.SetObserved(); // Prevent crash - always observe it
+    }
+
+    /// <summary>
+    /// Checks if the exception is likely network-related (to avoid cascading UI errors).
+    /// </summary>
+    private static bool IsNetworkRelatedError(Exception? exception)
+    {
+        if (exception == null) return false;
+
+        var message = exception.Message?.ToLowerInvariant() ?? "";
+        var typeName = exception.GetType().Name.ToLowerInvariant();
+
+        return message.Contains("network") ||
+               message.Contains("socket") ||
+               message.Contains("connection") ||
+               message.Contains("remote") ||
+               message.Contains("unreachable") ||
+               message.Contains("unc path") ||
+               typeName.Contains("socket") ||
+               typeName.Contains("network") ||
+               typeName.Contains("io") ||
+               exception.InnerException != null && IsNetworkRelatedError(exception.InnerException);
     }
 
     private static IConfiguration BuildConfiguration()

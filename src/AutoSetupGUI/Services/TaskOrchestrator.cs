@@ -27,6 +27,7 @@ public class TaskOrchestrator
     public event EventHandler<string>? StatusChanged;
     public event EventHandler<IndividualTaskProgressEventArgs>? IndividualTaskProgress;
     public event EventHandler<SCCMActionResult>? SCCMActionProgress;
+    public event EventHandler<DellProgressEventArgs>? DellProgress;
 
     public TaskOrchestrator(
         ILogger<TaskOrchestrator> logger,
@@ -158,13 +159,41 @@ public class TaskOrchestrator
                 // Signal task started
                 ReportIndividualTaskProgress("dell_complete", "Dell Command Update", TaskStatus.Running);
 
+                // Report detailed Dell progress
+                ReportDellProgress("Initializing", "Checking system...", 0);
+
                 var dellResult = await _dellUpdateService.RunCompleteUpdateAsync(
-                    new Progress<string>(msg => ReportStatus(msg)),
+                    new Progress<string>(msg =>
+                    {
+                        ReportStatus(msg);
+                        // Parse progress message to provide detailed updates
+                        if (msg.Contains("Installing") || msg.Contains("Copying"))
+                            ReportDellProgress("Installing DCU", msg, 10);
+                        else if (msg.Contains("Configuring"))
+                            ReportDellProgress("Configuring", msg, 20);
+                        else if (msg.Contains("Scanning"))
+                            ReportDellProgress("Scanning", msg, 30);
+                        else if (msg.Contains("Found"))
+                            ReportDellProgress("Scan Complete", msg, 40);
+                        else if (msg.Contains("Applying") || msg.Contains("update"))
+                            ReportDellProgress("Applying Updates", msg, 60);
+                        else if (msg.Contains("RESTART"))
+                            ReportDellProgress("Complete", msg, 100);
+                        else
+                            ReportDellProgress("Working", msg, -1); // -1 means don't update progress bar
+                    }),
                     cancellationToken);
 
                 results.TaskResults.Add(dellResult);
                 results.RequiresRestart |= dellResult.RequiresRestart;
                 LogTaskResult(dellResult);
+
+                // Signal completion
+                ReportDellProgress(
+                    dellResult.Status == TaskStatus.Success ? "Complete" : "Error",
+                    dellResult.Message,
+                    100,
+                    dellResult.DetailedOutput);
 
                 // Signal task completed
                 ReportIndividualTaskProgress("dell_complete", "Dell Command Update", dellResult.Status, dellResult.Message, dellResult.Duration);
@@ -261,18 +290,44 @@ public class TaskOrchestrator
 
     private void ReportProgress(string message, int percentage)
     {
-        TaskProgressChanged?.Invoke(this, new TaskProgressEventArgs(message, percentage));
-        _loggingService.LogInfo(message);
+        try
+        {
+            TaskProgressChanged?.Invoke(this, new TaskProgressEventArgs(message, percentage));
+        }
+        catch { /* Ignore event handler errors */ }
+
+        try
+        {
+            _loggingService.LogInfo(message);
+        }
+        catch { /* Ignore logging errors during network disruption */ }
     }
 
     private void ReportStatus(string status)
     {
-        StatusChanged?.Invoke(this, status);
+        try
+        {
+            StatusChanged?.Invoke(this, status);
+        }
+        catch { /* Ignore event handler errors */ }
     }
 
     private void ReportIndividualTaskProgress(string taskId, string taskName, TaskStatus status, string? message = null, TimeSpan? duration = null)
     {
-        IndividualTaskProgress?.Invoke(this, new IndividualTaskProgressEventArgs(taskId, taskName, status, message, duration));
+        try
+        {
+            IndividualTaskProgress?.Invoke(this, new IndividualTaskProgressEventArgs(taskId, taskName, status, message, duration));
+        }
+        catch { /* Ignore event handler errors */ }
+    }
+
+    private void ReportDellProgress(string phase, string message, int percentage, string? logOutput = null)
+    {
+        try
+        {
+            DellProgress?.Invoke(this, new DellProgressEventArgs(phase, message, percentage, logOutput));
+        }
+        catch { /* Ignore event handler errors */ }
     }
 
     private void LogTaskResult(TaskResult result)
@@ -355,5 +410,24 @@ public class IndividualTaskProgressEventArgs : EventArgs
         Status = status;
         Message = message;
         Duration = duration;
+    }
+}
+
+/// <summary>
+/// Event arguments for Dell Command Update detailed progress.
+/// </summary>
+public class DellProgressEventArgs : EventArgs
+{
+    public string Phase { get; }
+    public string Message { get; }
+    public int Percentage { get; }
+    public string? LogOutput { get; }
+
+    public DellProgressEventArgs(string phase, string message, int percentage, string? logOutput = null)
+    {
+        Phase = phase;
+        Message = message;
+        Percentage = percentage;
+        LogOutput = logOutput;
     }
 }

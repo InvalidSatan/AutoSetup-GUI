@@ -42,7 +42,7 @@ public class GroupPolicyService : IGroupPolicyService
 
         var maxRetries = _configuration.GetValue("GroupPolicy:MaxRetries", 2);
         var retryDelay = _configuration.GetValue("GroupPolicy:RetryDelaySeconds", 10);
-        var forceArg = _configuration.GetValue("GroupPolicy:ForceArgument", "/force");
+        var forceArg = _configuration.GetValue("GroupPolicy:ForceArgument", "/force") ?? "/force";
 
         for (int attempt = 1; attempt <= maxRetries + 1; attempt++)
         {

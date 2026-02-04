@@ -438,18 +438,23 @@ public class DellUpdateService : IDellUpdateService
             return result;
         }
 
-        var maxRetries = _configuration.GetValue("DellCommandUpdate:MaxRetries", 3);
+        var maxRetries = _configuration.GetValue("DellCommandUpdate:MaxRetries", 2);
         var retryDelay = _configuration.GetValue("DellCommandUpdate:RetryDelaySeconds", 10);
-        var retryableCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:Retryable").Get<int[]>() ?? new[] { 5, 7, 8 };
+        // Per working script: exit codes 104, 106 are retryable for scan
+        var retryableCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:ScanRetryable").Get<int[]>() ?? new[] { 104, 106 };
 
         // DCU 5.x exit codes for scan:
         // 0 = Updates available
         // 500 = No updates available
         // 1 = Reboot required from previous operation
-        var noUpdatesCodes = new[] { 500 };
+        var noUpdatesCodes = new[] { _configuration.GetValue("DellCommandUpdate:ExitCodes:NoUpdates", 500) };
 
-        var logPath = Path.Combine(Path.GetTempPath(), $"dcu_scan_{DateTime.Now:yyyyMMdd_HHmmss}.log");
-        var scanArgs = $"/scan -outputLog=\"{logPath}\"";
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var logPath = Path.Combine(Path.GetTempPath(), $"dcu_scan_{timestamp}.log");
+        var reportPath = Path.Combine(Path.GetTempPath(), $"dcu_report_{timestamp}.xml");
+
+        // Use -report to get detailed list of available updates
+        var scanArgs = $"/scan -outputLog=\"{logPath}\" -report=\"{reportPath}\"";
 
         for (int attempt = 1; attempt <= maxRetries + 1; attempt++)
         {
@@ -467,23 +472,68 @@ public class DellUpdateService : IDellUpdateService
                 result.ExitCode = processResult.ExitCode;
                 result.RawOutput = processResult.CombinedOutput;
 
+                // Read and log the scan output
                 if (File.Exists(logPath))
                 {
-                    result.RawOutput += Environment.NewLine + File.ReadAllText(logPath);
+                    var logContent = File.ReadAllText(logPath);
+                    result.RawOutput += Environment.NewLine + "=== DCU Log ===" + Environment.NewLine + logContent;
+                    _logger.LogInformation("DCU scan log output:\n{LogContent}", logContent);
+                }
+
+                // Parse the report XML to get update details
+                if (File.Exists(reportPath))
+                {
+                    try
+                    {
+                        var reportContent = File.ReadAllText(reportPath);
+                        result.RawOutput += Environment.NewLine + "=== Update Report ===" + Environment.NewLine + reportContent;
+
+                        // Parse updates from XML - look for UpdateInfo elements
+                        var updateNames = new List<string>();
+                        var updateMatches = System.Text.RegularExpressions.Regex.Matches(
+                            reportContent,
+                            @"<name>([^<]+)</name>",
+                            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                        foreach (System.Text.RegularExpressions.Match match in updateMatches)
+                        {
+                            updateNames.Add(match.Groups[1].Value.Trim());
+                        }
+
+                        result.UpdateCount = updateNames.Count;
+
+                        if (updateNames.Count > 0)
+                        {
+                            _logger.LogInformation("=== Found {Count} Dell update(s) available ===", updateNames.Count);
+                            foreach (var name in updateNames)
+                            {
+                                _logger.LogInformation("  - {UpdateName}", name);
+                            }
+
+                            progress?.Report($"Found {updateNames.Count} update(s): {string.Join(", ", updateNames.Take(3))}{(updateNames.Count > 3 ? "..." : "")}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not parse DCU report XML");
+                    }
                 }
 
                 if (processResult.ExitCode == 0)
                 {
                     result.Success = true;
                     result.UpdatesAvailable = true;
-                    result.Message = "Updates available";
-                    _logger.LogInformation("DCU scan completed - updates available");
+                    result.Message = result.UpdateCount > 0
+                        ? $"{result.UpdateCount} update(s) available"
+                        : "Updates available";
+                    _logger.LogInformation("DCU scan completed - {Message}", result.Message);
                     return result;
                 }
                 else if (noUpdatesCodes.Contains(processResult.ExitCode))
                 {
                     result.Success = true;
                     result.UpdatesAvailable = false;
+                    result.UpdateCount = 0;
                     result.Message = "No updates available";
                     _logger.LogInformation("DCU scan completed - no updates available (exit code {ExitCode})", processResult.ExitCode);
                     return result;
@@ -529,7 +579,7 @@ public class DellUpdateService : IDellUpdateService
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Applying Dell updates...");
+        _logger.LogInformation("=== Starting Dell Update Application ===");
 
         var result = new TaskResult
         {
@@ -553,42 +603,81 @@ public class DellUpdateService : IDellUpdateService
         // 1 = Success, soft reboot required
         // 5 = Success, hard reboot required
         // 500 = No updates available
-        var successCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:Success").Get<int[]>() ?? new[] { 0 };
+        // NOTE: Success codes now include 1 and 5 as they indicate updates were applied
+        var successCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:Success").Get<int[]>() ?? new[] { 0, 1, 5 };
         var rebootRequiredCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:RebootRequired").Get<int[]>() ?? new[] { 1, 5 };
         var noUpdatesCodes = new[] { _configuration.GetValue("DellCommandUpdate:ExitCodes:NoUpdates", 500) };
 
-        var logPath = Path.Combine(Path.GetTempPath(), $"dcu_update_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var logPath = Path.Combine(Path.GetTempPath(), $"dcu_update_{timestamp}.log");
 
-        // Build update arguments from config (matching original script approach)
-        var rebootArg = _configuration.GetValue<string>("DellCommandUpdate:RebootArgument") ?? "-reboot=disable";
-        var updateArgs = $"/applyUpdates -silent -autoSuspendBitLocker=enable {rebootArg} -outputLog=\"{logPath}\"";
+        // Build update arguments matching the WORKING script:
+        // -forceupdate=enable is CRITICAL - forces updates even if previously declined
+        // -reboot=enable allows DCU to handle reboots (we can intercept via exit codes)
+        var forceUpdateArg = _configuration.GetValue<string>("DellCommandUpdate:ForceUpdateArgument") ?? "-forceupdate=enable";
+        var rebootArg = _configuration.GetValue<string>("DellCommandUpdate:RebootArgument") ?? "-reboot=enable";
+        var updateArgs = $"/applyUpdates {forceUpdateArg} {rebootArg} -outputLog=\"{logPath}\"";
+
+        _logger.LogInformation("DCU command: {DcuPath} {Args}", dcuPath, updateArgs);
 
         try
         {
-            progress?.Report("Applying Dell updates (this may take a while)...");
+            progress?.Report("Applying Dell updates (this may take 15-30 minutes)...");
+            _logger.LogInformation("Starting Dell update application - this may take a while...");
 
-            var processResult = await _processRunner.RunAsync(dcuPath, updateArgs, timeoutMs: 1800000, cancellationToken: cancellationToken);
+            // Use a longer timeout for updates - BIOS and firmware updates can take a long time
+            var processResult = await _processRunner.RunAsync(
+                dcuPath,
+                updateArgs,
+                timeoutMs: 3600000, // 60 minutes timeout
+                cancellationToken: cancellationToken);
 
             result.ExitCode = processResult.ExitCode;
             result.DetailedOutput = processResult.CombinedOutput;
 
+            _logger.LogInformation("DCU applyUpdates exited with code: {ExitCode}", processResult.ExitCode);
+            _logger.LogInformation("DCU stdout:\n{Output}", processResult.StandardOutput);
+            if (!string.IsNullOrEmpty(processResult.StandardError))
+            {
+                _logger.LogWarning("DCU stderr:\n{Error}", processResult.StandardError);
+            }
+
+            // Read the detailed log file
             if (File.Exists(logPath))
             {
-                result.DetailedOutput += Environment.NewLine + File.ReadAllText(logPath);
+                var logContent = File.ReadAllText(logPath);
+                result.DetailedOutput += Environment.NewLine + "=== DCU Update Log ===" + Environment.NewLine + logContent;
+                _logger.LogInformation("=== DCU Update Log ===\n{LogContent}", logContent);
+
+                // Parse log for installed updates
+                var installedMatches = System.Text.RegularExpressions.Regex.Matches(
+                    logContent,
+                    @"(Installed|Applied|Updated|Success)[:\s]+([^\r\n]+)",
+                    System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                if (installedMatches.Count > 0)
+                {
+                    _logger.LogInformation("=== Updates Applied ===");
+                    foreach (System.Text.RegularExpressions.Match match in installedMatches)
+                    {
+                        _logger.LogInformation("  {Status}: {Update}", match.Groups[1].Value, match.Groups[2].Value);
+                    }
+                }
             }
 
             if (successCodes.Contains(processResult.ExitCode))
             {
                 result.Status = TaskStatus.Success;
-                result.Message = "Updates applied successfully";
-                _logger.LogInformation("Dell updates applied successfully");
+                result.Message = "All updates applied successfully";
+                _logger.LogInformation("=== Dell updates applied successfully (no reboot needed) ===");
             }
             else if (rebootRequiredCodes.Contains(processResult.ExitCode))
             {
                 result.Status = TaskStatus.Success;
                 result.RequiresRestart = true;
-                result.Message = "Updates applied successfully - restart required";
-                _logger.LogInformation("Dell updates applied - restart required (exit code {ExitCode})", processResult.ExitCode);
+                result.Message = "Updates applied successfully - RESTART REQUIRED to complete";
+                _logger.LogInformation("=== Dell updates applied - RESTART REQUIRED (exit code {ExitCode}) ===", processResult.ExitCode);
+                progress?.Report("Updates applied - RESTART REQUIRED to complete installation");
             }
             else if (noUpdatesCodes.Contains(processResult.ExitCode))
             {
@@ -611,6 +700,7 @@ public class DellUpdateService : IDellUpdateService
         }
 
         result.EndTime = DateTime.Now;
+        _logger.LogInformation("Dell update application completed in {Duration}", result.Duration);
         return result;
     }
 

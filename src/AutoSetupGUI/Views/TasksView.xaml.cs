@@ -41,6 +41,7 @@ public partial class TasksView : Page
         _orchestrator.StatusChanged += Orchestrator_StatusChanged;
         _orchestrator.IndividualTaskProgress += Orchestrator_IndividualTaskProgress;
         _orchestrator.SCCMActionProgress += Orchestrator_SCCMActionProgress;
+        _orchestrator.DellProgress += Orchestrator_DellProgress;
 
         Loaded += TasksView_Loaded;
     }
@@ -103,7 +104,16 @@ public partial class TasksView : Page
             ResetSCCMActionStatuses();
         }
         if (options.RunDellUpdates)
+        {
             SetStatus(StatusDell, TxtStatusDell, "Pending", TaskStatus.Pending);
+            // Reset Dell progress panel
+            DellProgressPanel.Visibility = Visibility.Collapsed;
+            TxtDellPhase.Text = "Initializing...";
+            DellProgressBar.Value = 0;
+            TxtDellUpdatesCount.Text = "Checking...";
+            TxtDellCurrentActivity.Text = "";
+            TxtDellLiveLog.Text = "";
+        }
         if (options.RunImageChecks)
             SetStatus(StatusChecks, TxtStatusChecks, "Pending", TaskStatus.Pending);
 
@@ -145,13 +155,13 @@ public partial class TasksView : Page
                 _lastReportPath = results.ReportPath;
                 BtnViewReport.Visibility = Visibility.Visible;
 
-                // Auto-open the PDF report (much faster than HTML in browser)
-                _reportService.OpenReport(results.ReportPath);
+                // Show the report in our built-in viewer (avoids Edge first-run experience)
+                // The viewer also shows the restart button if needed
+                _reportService.ShowReportViewer(results.ReportPath, results.RequiresRestart);
             }
-
-            // Offer restart if needed
-            if (results.RequiresRestart)
+            else if (results.RequiresRestart)
             {
+                // No report but restart needed - show message box
                 var result = MessageBox.Show(
                     "Some updates require a restart to complete. Would you like to restart now?",
                     "Restart Required",
@@ -179,59 +189,83 @@ public partial class TasksView : Page
 
     private void Orchestrator_TaskProgressChanged(object? sender, TaskProgressEventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        try
         {
-            ProgressBar.Value = e.Percentage;
-            TxtProgressStatus.Text = e.Message;
-        });
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    ProgressBar.Value = e.Percentage;
+                    TxtProgressStatus.Text = e.Message;
+                }
+                catch { /* Ignore UI update errors */ }
+            });
+        }
+        catch { /* Ignore dispatcher errors */ }
     }
 
     private void Orchestrator_StatusChanged(object? sender, string e)
     {
-        Dispatcher.Invoke(() =>
+        try
         {
-            TxtProgressDetail.Text = e;
-        });
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    TxtProgressDetail.Text = e;
+                }
+                catch { /* Ignore UI update errors */ }
+            });
+        }
+        catch { /* Ignore dispatcher errors */ }
     }
 
     private void Orchestrator_IndividualTaskProgress(object? sender, IndividualTaskProgressEventArgs e)
     {
-        Dispatcher.Invoke(() =>
+        try
         {
-            // Map task ID to UI elements and update status
-            switch (e.TaskId)
+            Dispatcher.Invoke(() =>
             {
-                case "group_policy":
-                    SetStatus(StatusGP, TxtStatusGP,
-                        e.Status == TaskStatus.Running ? "Running..." : e.Status.ToString(),
-                        e.Status);
-                    if (e.Duration.HasValue)
-                        TxtDurationGP.Text = $"({FormatDuration(e.Duration.Value)})";
-                    break;
+                try
+                {
+                    // Map task ID to UI elements and update status
+                    switch (e.TaskId)
+                    {
+                        case "group_policy":
+                            SetStatus(StatusGP, TxtStatusGP,
+                                e.Status == TaskStatus.Running ? "Running..." : e.Status.ToString(),
+                                e.Status);
+                            if (e.Duration.HasValue)
+                                TxtDurationGP.Text = $"({FormatDuration(e.Duration.Value)})";
+                            break;
 
-                case "sccm_actions":
-                    SetStatus(StatusSCCM, TxtStatusSCCM,
-                        e.Status == TaskStatus.Running ? "Running..." : (e.Message ?? e.Status.ToString()),
-                        e.Status);
-                    if (e.Duration.HasValue)
-                        TxtDurationSCCM.Text = $"({FormatDuration(e.Duration.Value)})";
-                    break;
+                        case "sccm_actions":
+                            SetStatus(StatusSCCM, TxtStatusSCCM,
+                                e.Status == TaskStatus.Running ? "Running..." : (e.Message ?? e.Status.ToString()),
+                                e.Status);
+                            if (e.Duration.HasValue)
+                                TxtDurationSCCM.Text = $"({FormatDuration(e.Duration.Value)})";
+                            break;
 
-                case "dell_complete":
-                    SetStatus(StatusDell, TxtStatusDell,
-                        e.Status == TaskStatus.Running ? "Running..." : e.Status.ToString(),
-                        e.Status);
-                    if (e.Duration.HasValue)
-                        TxtDurationDell.Text = $"({FormatDuration(e.Duration.Value)})";
-                    break;
+                        case "dell_complete":
+                            SetStatus(StatusDell, TxtStatusDell,
+                                e.Status == TaskStatus.Running ? "Running..." : e.Status.ToString(),
+                                e.Status);
+                            if (e.Duration.HasValue)
+                                TxtDurationDell.Text = $"({FormatDuration(e.Duration.Value)})";
+                            break;
 
-                case "image_checks":
-                    SetStatus(StatusChecks, TxtStatusChecks,
-                        e.Status == TaskStatus.Running ? "Running..." : (e.Message ?? e.Status.ToString()),
-                        e.Status);
-                    break;
-            }
-        });
+                        case "image_checks":
+                            SetStatus(StatusChecks, TxtStatusChecks,
+                                e.Status == TaskStatus.Running ? "Running..." : (e.Message ?? e.Status.ToString()),
+                                e.Status);
+                            break;
+                    }
+                }
+                catch { /* Ignore UI update errors */ }
+            });
+        }
+        catch { /* Ignore dispatcher errors */ }
     }
 
     private static string FormatDuration(TimeSpan duration)
@@ -243,17 +277,87 @@ public partial class TasksView : Page
 
     private void Orchestrator_SCCMActionProgress(object? sender, SCCMActionResult e)
     {
-        Dispatcher.Invoke(() =>
+        try
         {
-            // Find the matching view model and update its status
-            var viewModel = _sccmActionViewModels.FirstOrDefault(vm =>
-                vm.ScheduleId == e.Action.ScheduleId);
-
-            if (viewModel != null)
+            Dispatcher.Invoke(() =>
             {
-                viewModel.UpdateFromResult(e);
-            }
-        });
+                try
+                {
+                    // Find the matching view model and update its status
+                    var viewModel = _sccmActionViewModels.FirstOrDefault(vm =>
+                        vm.ScheduleId == e.Action.ScheduleId);
+
+                    if (viewModel != null)
+                    {
+                        viewModel.UpdateFromResult(e);
+                    }
+                }
+                catch { /* Ignore UI update errors */ }
+            });
+        }
+        catch { /* Ignore dispatcher errors */ }
+    }
+
+    private void Orchestrator_DellProgress(object? sender, DellProgressEventArgs e)
+    {
+        // Wrap in try-catch to prevent network disruption from crashing the app
+        try
+        {
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Show the Dell progress panel
+                    DellProgressPanel.Visibility = Visibility.Visible;
+
+                    // Update phase
+                    TxtDellPhase.Text = e.Phase;
+
+                    // Update progress bar (only if percentage >= 0)
+                    if (e.Percentage >= 0)
+                    {
+                        DellProgressBar.Value = e.Percentage;
+                    }
+
+                    // Update current activity
+                    TxtDellCurrentActivity.Text = e.Message;
+
+                    // Parse updates count from message if available
+                    if (e.Message.Contains("update(s)") || e.Message.Contains("Found"))
+                    {
+                        TxtDellUpdatesCount.Text = e.Message;
+                    }
+                    else if (e.Phase == "Complete")
+                    {
+                        if (e.Message.Contains("No updates"))
+                            TxtDellUpdatesCount.Text = "No updates needed";
+                        else if (e.Message.Contains("RESTART"))
+                            TxtDellUpdatesCount.Text = "Updates applied - restart required";
+                        else
+                            TxtDellUpdatesCount.Text = "Updates applied successfully";
+                    }
+
+                    // Append to live log
+                    if (!string.IsNullOrEmpty(e.Message))
+                    {
+                        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        TxtDellLiveLog.Text += $"[{timestamp}] [{e.Phase}] {e.Message}\n";
+
+                        // Auto-scroll to bottom
+                        DellLogScroller.ScrollToEnd();
+                    }
+
+                    // If we have detailed log output, append it
+                    if (!string.IsNullOrEmpty(e.LogOutput))
+                    {
+                        TxtDellLiveLog.Text += "\n=== Detailed Log ===\n" + e.LogOutput + "\n";
+                        DellLogScroller.ScrollToEnd();
+                    }
+                }
+                catch { /* Ignore UI update errors during network disruption */ }
+            });
+        }
+        catch { /* Ignore dispatcher errors */ }
     }
 
     private void ResetSCCMActionStatuses()
@@ -336,9 +440,74 @@ public partial class TasksView : Page
         try
         {
             SetStatus(StatusDell, TxtStatusDell, "Running", TaskStatus.Running);
+
+            // Show and reset Dell progress panel
+            DellProgressPanel.Visibility = Visibility.Visible;
+            TxtDellPhase.Text = "Initializing...";
+            DellProgressBar.Value = 0;
+            TxtDellUpdatesCount.Text = "Checking...";
+            TxtDellCurrentActivity.Text = "";
+            TxtDellLiveLog.Text = "";
+
             var result = await _dellUpdateService.RunCompleteUpdateAsync(
-                new Progress<string>(msg => TxtProgressDetail.Text = msg));
+                new Progress<string>(msg =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        TxtProgressDetail.Text = msg;
+                        TxtDellCurrentActivity.Text = msg;
+
+                        // Update phase based on message content
+                        if (msg.Contains("Installing") || msg.Contains("Copying"))
+                        {
+                            TxtDellPhase.Text = "Installing DCU";
+                            DellProgressBar.Value = 15;
+                        }
+                        else if (msg.Contains("Configuring"))
+                        {
+                            TxtDellPhase.Text = "Configuring";
+                            DellProgressBar.Value = 25;
+                        }
+                        else if (msg.Contains("Scanning"))
+                        {
+                            TxtDellPhase.Text = "Scanning for Updates";
+                            DellProgressBar.Value = 35;
+                        }
+                        else if (msg.Contains("Found") || msg.Contains("update(s)"))
+                        {
+                            TxtDellPhase.Text = "Scan Complete";
+                            TxtDellUpdatesCount.Text = msg;
+                            DellProgressBar.Value = 45;
+                        }
+                        else if (msg.Contains("Applying") || msg.Contains("15-30"))
+                        {
+                            TxtDellPhase.Text = "Applying Updates";
+                            DellProgressBar.Value = 60;
+                        }
+                        else if (msg.Contains("RESTART"))
+                        {
+                            TxtDellPhase.Text = "Complete";
+                            TxtDellUpdatesCount.Text = "Updates applied - restart required";
+                            DellProgressBar.Value = 100;
+                        }
+
+                        // Append to live log
+                        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        TxtDellLiveLog.Text += $"[{timestamp}] {msg}\n";
+                        DellLogScroller.ScrollToEnd();
+                    });
+                }));
+
             UpdateTaskStatus(StatusDell, TxtStatusDell, TxtDurationDell, result);
+
+            // Update final status
+            TxtDellPhase.Text = result.Status == TaskStatus.Success ? "Complete" : "Error";
+            DellProgressBar.Value = 100;
+            if (!string.IsNullOrEmpty(result.DetailedOutput))
+            {
+                TxtDellLiveLog.Text += "\n=== Detailed Log ===\n" + result.DetailedOutput;
+                DellLogScroller.ScrollToEnd();
+            }
         }
         finally
         {
@@ -370,7 +539,7 @@ public partial class TasksView : Page
     {
         if (!string.IsNullOrEmpty(_lastReportPath) && System.IO.File.Exists(_lastReportPath))
         {
-            _reportService.OpenReport(_lastReportPath);
+            _reportService.ShowReportViewer(_lastReportPath, requiresRestart: false);
         }
     }
 
