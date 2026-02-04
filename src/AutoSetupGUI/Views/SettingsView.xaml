@@ -28,7 +28,7 @@
                         </Grid.RowDefinitions>
 
                         <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtVersion" Text="3.0.0" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtVersion" Text="2.0.0" Margin="0,0,0,8"/>
 
                         <TextBlock Grid.Row="1" Grid.Column="0" Text="Organization:" FontWeight="SemiBold" Margin="0,0,0,8"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" Text="Appalachian State University" Margin="0,0,0,8"/>

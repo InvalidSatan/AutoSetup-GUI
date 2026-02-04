@@ -17,18 +17,19 @@ public class AppConfiguration
 
 public class ApplicationSettings
 {
-    public string Version { get; set; } = "3.0.0";
+    public string Version { get; set; } = "2.0.0";
     public string Name { get; set; } = "University Auto Setup";
     public string Organization { get; set; } = "Appalachian State University";
 }
 
 public class BrandingSettings
 {
-    public string UniversityBlue { get; set; } = "#003399";
-    public string ActionBlue { get; set; } = "#0078d7";
-    public string SuccessGreen { get; set; } = "#107C10";
-    public string WarningYellow { get; set; } = "#FF8C00";
-    public string ErrorRed { get; set; } = "#D13438";
+    public string PrimaryColor { get; set; } = "#010101";
+    public string AccentColor { get; set; } = "#FFCC00";
+    public string SuccessGreen { get; set; } = "#69AA61";
+    public string WarningYellow { get; set; } = "#D7A527";
+    public string ErrorRed { get; set; } = "#C6602A";
+    public string InfoBlue { get; set; } = "#03659C";
     public string LogoPath { get; set; } = "Resources/Images/appstate_logo.png";
     public string ContactEmail { get; set; } = "guillra@appstate.edu";
     public string ContactName { get; set; } = "Alex Guill";

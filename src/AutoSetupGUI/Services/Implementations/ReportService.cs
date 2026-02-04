@@ -28,10 +28,12 @@ public class ReportService : IReportService
         IEnumerable<TaskResult> taskResults,
         ImageCheckResult? imageChecks = null)
     {
-        var universityBlue = _configuration.GetValue("Branding:UniversityBlue", "#003399");
-        var successGreen = _configuration.GetValue("Branding:SuccessGreen", "#107C10");
-        var errorRed = _configuration.GetValue("Branding:ErrorRed", "#D13438");
-        var warningYellow = _configuration.GetValue("Branding:WarningYellow", "#FF8C00");
+        // App State brand colors
+        var primaryColor = _configuration.GetValue("Branding:PrimaryColor", "#010101");
+        var accentColor = _configuration.GetValue("Branding:AccentColor", "#FFCC00");
+        var successGreen = _configuration.GetValue("Branding:SuccessGreen", "#69AA61");
+        var errorRed = _configuration.GetValue("Branding:ErrorRed", "#C6602A");
+        var warningYellow = _configuration.GetValue("Branding:WarningYellow", "#D7A527");
 
         var sb = new StringBuilder();
 
@@ -45,12 +47,12 @@ public class ReportService : IReportService
         * {{ box-sizing: border-box; margin: 0; padding: 0; }}
         body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; padding: 20px; }}
         .container {{ max-width: 900px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-        .header {{ background: {universityBlue}; color: white; padding: 24px; border-radius: 8px 8px 0 0; }}
+        .header {{ background: {primaryColor}; color: white; padding: 24px; border-radius: 8px 8px 0 0; }}
         .header h1 {{ font-size: 24px; margin-bottom: 8px; }}
         .header p {{ opacity: 0.9; }}
         .section {{ padding: 24px; border-bottom: 1px solid #eee; }}
         .section:last-child {{ border-bottom: none; }}
-        .section h2 {{ color: {universityBlue}; font-size: 18px; margin-bottom: 16px; }}
+        .section h2 {{ color: {primaryColor}; font-size: 18px; margin-bottom: 16px; }}
         .info-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }}
         .info-item {{ padding: 8px 12px; background: #f8f8f8; border-radius: 4px; }}
         .info-label {{ font-size: 12px; color: #666; }}
@@ -196,7 +198,7 @@ public class ReportService : IReportService
 
         sb.AppendLine($@"
         <div class=""footer"">
-            University Auto Setup v3.0 | Appalachian State University<br>
+            University Auto Setup v2.0 | Appalachian State University<br>
             Contact: {_configuration.GetValue("Branding:ContactName", "IT Support")} ({_configuration.GetValue("Branding:ContactEmail", "support@appstate.edu")})
         </div>
     </div>

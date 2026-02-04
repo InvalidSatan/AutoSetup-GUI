@@ -16,6 +16,7 @@ public partial class LogViewerView : Page
     private readonly ILoggingService _loggingService;
     private readonly ObservableCollection<LogEntry> _filteredLogs = new();
     private List<LogEntry> _allLogs = new();
+    private bool _isLoaded = false;
 
     public LogViewerView()
     {
@@ -35,6 +36,8 @@ public partial class LogViewerView : Page
     {
         // Load existing logs
         _allLogs = _loggingService.GetLogEntries().ToList();
+
+        _isLoaded = true;
         ApplyFilter();
 
         // Update status
@@ -69,16 +72,24 @@ public partial class LogViewerView : Page
 
     private void Filter_Changed(object sender, RoutedEventArgs e)
     {
+        if (!_isLoaded)
+            return;
         ApplyFilter();
     }
 
     private void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
     {
+        if (!_isLoaded)
+            return;
         ApplyFilter();
     }
 
     private void ApplyFilter()
     {
+        // Guard against calls during initialization
+        if (!_isLoaded || TxtSearch == null || ChkDebug == null)
+            return;
+
         _filteredLogs.Clear();
 
         var searchText = TxtSearch.Text?.ToLower() ?? "";
@@ -96,6 +107,10 @@ public partial class LogViewerView : Page
 
     private bool ShouldShowEntry(LogEntry entry)
     {
+        // Guard against calls during initialization
+        if (ChkDebug == null || ChkInfo == null || ChkWarning == null || ChkError == null || ChkSuccess == null)
+            return true;
+
         return entry.Level switch
         {
             LogLevel.Debug => ChkDebug.IsChecked == true,
@@ -120,7 +135,8 @@ public partial class LogViewerView : Page
 
     private void UpdateCount()
     {
-        TxtLogCount.Text = $"{_filteredLogs.Count} entries (of {_allLogs.Count} total)";
+        if (TxtLogCount != null)
+            TxtLogCount.Text = $"{_filteredLogs.Count} entries (of {_allLogs.Count} total)";
     }
 
     private void BtnOpenFolder_Click(object sender, RoutedEventArgs e)

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:views="clr-namespace:AutoSetupGUI.Views"
         mc:Ignorable="d"
-        Title="University Auto Setup v3.0"
+        Title="University Auto Setup v2.0"
         Height="800" Width="1200"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
@@ -40,7 +40,7 @@
                     <StackPanel>
                         <TextBlock Text="University" FontSize="12" Foreground="White" Opacity="0.8"/>
                         <TextBlock Text="Auto Setup" FontSize="22" FontWeight="Bold" Foreground="White"/>
-                        <TextBlock Text="v3.0" FontSize="11" Foreground="White" Opacity="0.7" Margin="0,4,0,0"/>
+                        <TextBlock Text="v2.0" FontSize="11" Foreground="White" Opacity="0.7" Margin="0,4,0,0"/>
                     </StackPanel>
                 </Border>
 

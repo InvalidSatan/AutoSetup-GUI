@@ -73,6 +73,157 @@ public class DellUpdateService : IDellUpdateService
         return null;
     }
 
+    /// <summary>
+    /// Checks if .NET 8 Desktop Runtime is installed.
+    /// </summary>
+    public bool IsDotNet8Installed()
+    {
+        try
+        {
+            // Check for .NET 8 Desktop Runtime by looking for the runtime folder
+            var dotnetPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                "dotnet", "shared", "Microsoft.WindowsDesktop.App");
+
+            if (Directory.Exists(dotnetPath))
+            {
+                var versions = Directory.GetDirectories(dotnetPath);
+                foreach (var version in versions)
+                {
+                    var versionName = Path.GetFileName(version);
+                    if (versionName.StartsWith("8."))
+                    {
+                        _logger.LogDebug(".NET 8 Desktop Runtime found: {Version}", versionName);
+                        return true;
+                    }
+                }
+            }
+
+            // Also check via registry
+            var registryPath = @"SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App";
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(registryPath);
+            if (key != null)
+            {
+                foreach (var valueName in key.GetValueNames())
+                {
+                    if (valueName.StartsWith("8."))
+                    {
+                        _logger.LogDebug(".NET 8 Desktop Runtime found in registry: {Version}", valueName);
+                        return true;
+                    }
+                }
+            }
+
+            _logger.LogDebug(".NET 8 Desktop Runtime not found");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error checking for .NET 8 Desktop Runtime");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Installs .NET 8 Desktop Runtime if not present.
+    /// </summary>
+    public async Task<TaskResult> InstallDotNet8Async(
+        IProgress<string>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Checking .NET 8 Desktop Runtime installation...");
+
+        var result = new TaskResult
+        {
+            TaskId = "dotnet8_install",
+            TaskName = ".NET 8 Desktop Runtime Installation",
+            StartTime = DateTime.Now,
+            Status = TaskStatus.Running
+        };
+
+        // Check if already installed
+        if (IsDotNet8Installed())
+        {
+            result.Status = TaskStatus.Success;
+            result.Message = ".NET 8 Desktop Runtime is already installed";
+            result.EndTime = DateTime.Now;
+            _logger.LogInformation(".NET 8 Desktop Runtime is already installed");
+            return result;
+        }
+
+        progress?.Report("Installing .NET 8 Desktop Runtime (required for Dell Command Update)...");
+
+        var installerUNC = _configuration.GetValue<string>("DellCommandUpdate:DotNet8InstallerUNC")
+            ?? @"\\server\share\Dell\DCU\dotnet-sdk-8.0.417-win-x64.exe";
+
+        var localInstallerPath = Path.Combine(Path.GetTempPath(), "dotnet-sdk-8.0.417-win-x64.exe");
+
+        try
+        {
+            // Check if UNC path is accessible
+            if (!File.Exists(installerUNC))
+            {
+                result.Status = TaskStatus.Error;
+                result.Message = $".NET 8 installer not found at: {installerUNC}";
+                result.EndTime = DateTime.Now;
+                _logger.LogError(".NET 8 installer not found at UNC path: {Path}", installerUNC);
+                return result;
+            }
+
+            // Copy installer locally
+            progress?.Report("Copying .NET 8 installer locally...");
+            _logger.LogInformation("Copying .NET 8 installer from {Source} to {Destination}", installerUNC, localInstallerPath);
+
+            File.Copy(installerUNC, localInstallerPath, overwrite: true);
+
+            // Run installer silently
+            progress?.Report("Installing .NET 8 Desktop Runtime (this may take a few minutes)...");
+            _logger.LogInformation("Starting .NET 8 installation...");
+
+            var installResult = await _processRunner.RunAsync(
+                localInstallerPath,
+                "/install /quiet /norestart",
+                timeoutMs: 600000, // 10 minutes
+                cancellationToken: cancellationToken);
+
+            _logger.LogInformation(".NET 8 installer exited with code: {ExitCode}", installResult.ExitCode);
+
+            // Exit codes: 0 = success, 3010 = success but reboot required, 1641 = success reboot initiated
+            if (installResult.ExitCode == 0 || installResult.ExitCode == 3010 || installResult.ExitCode == 1641)
+            {
+                result.Status = TaskStatus.Success;
+                result.Message = ".NET 8 Desktop Runtime installed successfully";
+                result.RequiresRestart = installResult.ExitCode == 3010 || installResult.ExitCode == 1641;
+                _logger.LogInformation(".NET 8 Desktop Runtime installed successfully");
+            }
+            else
+            {
+                result.Status = TaskStatus.Error;
+                result.Message = $".NET 8 installation failed with exit code: {installResult.ExitCode}";
+                _logger.LogError(".NET 8 installation failed with exit code: {ExitCode}", installResult.ExitCode);
+            }
+
+            result.ExitCode = installResult.ExitCode;
+            result.DetailedOutput = installResult.CombinedOutput;
+        }
+        catch (Exception ex)
+        {
+            result.Status = TaskStatus.Error;
+            result.Message = $".NET 8 installation failed: {ex.Message}";
+            _logger.LogError(ex, "Error installing .NET 8 Desktop Runtime");
+        }
+        finally
+        {
+            // Cleanup
+            if (File.Exists(localInstallerPath))
+            {
+                try { File.Delete(localInstallerPath); } catch { }
+            }
+        }
+
+        result.EndTime = DateTime.Now;
+        return result;
+    }
+
     public async Task<TaskResult> InstallAsync(
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
@@ -95,6 +246,29 @@ public class DellUpdateService : IDellUpdateService
             result.EndTime = DateTime.Now;
             _logger.LogInformation("Dell Command Update is already installed at: {Path}", _dcuPath);
             return result;
+        }
+
+        // Check and install .NET 8 if needed (DCU 5.x requires .NET 8)
+        progress?.Report("Checking .NET 8 Desktop Runtime dependency...");
+        if (!IsDotNet8Installed())
+        {
+            _logger.LogInformation(".NET 8 Desktop Runtime not found, installing...");
+            var dotNetResult = await InstallDotNet8Async(progress, cancellationToken);
+
+            if (dotNetResult.Status == TaskStatus.Error)
+            {
+                result.Status = TaskStatus.Error;
+                result.Message = $"Failed to install .NET 8 prerequisite: {dotNetResult.Message}";
+                result.EndTime = DateTime.Now;
+                return result;
+            }
+
+            // If restart is required after .NET install, we should note it
+            if (dotNetResult.RequiresRestart)
+            {
+                result.RequiresRestart = true;
+                _logger.LogWarning(".NET 8 installation requires restart before DCU can be installed");
+            }
         }
 
         progress?.Report("Downloading Dell Command Update installer...");

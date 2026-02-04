@@ -1,10 +1,10 @@
 @echo off
-title University Auto Setup v3.0
+title University Auto Setup v2.0
 color 1F
 
 echo.
 echo  ===============================================================
-echo                   University Auto Setup v3.0
+echo                   University Auto Setup v2.0
 echo               Appalachian State University
 echo  ===============================================================
 echo.

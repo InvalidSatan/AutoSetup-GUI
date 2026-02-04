@@ -13,7 +13,7 @@ using AutoSetupGUI.Infrastructure;
 namespace AutoSetupGUI;
 
 /// <summary>
-/// University Auto Setup v3.0 Application
+/// University Auto Setup v2.0 Application
 /// Professional-grade Windows machine setup application for Appalachian State University
 /// </summary>
 public partial class App : Application
@@ -58,7 +58,11 @@ public partial class App : Application
         // Build service provider
         Services = ConfigureServices();
 
-        Log.Information("University Auto Setup v3.0 starting...");
+        Log.Information("University Auto Setup v2.0 starting...");
+
+        // Create and show the main window AFTER services are configured
+        var mainWindow = new Views.MainWindow();
+        mainWindow.Show();
     }
 
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -162,7 +166,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        Log.Information("University Auto Setup v3.0 shutting down...");
+        Log.Information("University Auto Setup v2.0 shutting down...");
         Log.CloseAndFlush();
         base.OnExit(e);
     }

@@ -67,7 +67,7 @@ public class TaskOrchestrator
             var computerName = _systemInfoService.GetComputerName();
             await _loggingService.InitializeAsync(serviceTag, computerName);
 
-            _loggingService.LogHeader("University Auto Setup v3.0");
+            _loggingService.LogHeader("University Auto Setup v2.0");
 
             // Prevent sleep during setup
             _sleepPrevention.PreventSleep();

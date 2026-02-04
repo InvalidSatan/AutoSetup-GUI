@@ -49,7 +49,7 @@ public class LoggingService : ILoggingService
         try
         {
             Directory.CreateDirectory(_localLogPath);
-            _mainLogFile = Path.Combine(_localLogPath, $"UniversityAutoSetup_v3.0.0_{timestamp}.log");
+            _mainLogFile = Path.Combine(_localLogPath, $"UniversityAutoSetup_v2.0.0_{timestamp}.log");
             _logger.LogDebug("Local log directory created: {Path}", _localLogPath);
         }
         catch (Exception ex)
@@ -57,7 +57,7 @@ public class LoggingService : ILoggingService
             // Fall back to temp folder
             _localLogPath = Path.Combine(Path.GetTempPath(), "UniversityAutoSetup", "Logs", folderName);
             Directory.CreateDirectory(_localLogPath);
-            _mainLogFile = Path.Combine(_localLogPath, $"UniversityAutoSetup_v3.0.0_{timestamp}.log");
+            _mainLogFile = Path.Combine(_localLogPath, $"UniversityAutoSetup_v2.0.0_{timestamp}.log");
             _logger.LogWarning(ex, "Failed to create local log directory, using fallback: {Path}", _localLogPath);
         }
 
@@ -70,7 +70,7 @@ public class LoggingService : ILoggingService
             if (Directory.Exists(Path.GetPathRoot(networkBasePath)))
             {
                 Directory.CreateDirectory(_networkLogPath);
-                _networkMainLogFile = Path.Combine(_networkLogPath, $"UniversityAutoSetup_v3.0.0_{timestamp}.log");
+                _networkMainLogFile = Path.Combine(_networkLogPath, $"UniversityAutoSetup_v2.0.0_{timestamp}.log");
                 _networkLoggingAvailable = true;
                 _logger.LogDebug("Network log directory created: {Path}", _networkLogPath);
             }
@@ -91,7 +91,7 @@ public class LoggingService : ILoggingService
         _isInitialized = true;
 
         // Write initial log entries
-        LogHeader("University Auto Setup v3.0");
+        LogHeader("University Auto Setup v2.0");
         LogInfo($"Log initialized at {DateTime.Now}");
         LogInfo($"Computer Name: {computerName}");
         LogInfo($"Service Tag: {serviceTag}");

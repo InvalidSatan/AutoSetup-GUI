@@ -21,7 +21,7 @@ public class ConfigurationService : IConfigurationService
 
     public AppConfiguration Configuration => _appConfig!;
 
-    public string Version => _appConfig?.Application.Version ?? "3.0.0";
+    public string Version => _appConfig?.Application.Version ?? "2.0.0";
 
     private void LoadConfiguration()
     {

@@ -1,4 +1,4 @@
-# University Auto Setup v3.0
+# University Auto Setup v2.0
 
 Professional-grade Windows machine setup application for Appalachian State University IT department.
 
@@ -71,7 +71,7 @@ Edit `appsettings.json` to customize:
 
 ### Network Share Structure
 ```
-\\server\share\UniversityAutoSetup\v3.0\
+\\server\share\UniversityAutoSetup\v2.0\
 ├── AutoSetup-GUI.exe
 ├── AutoSetup-GUI.bat
 ├── appsettings.json
@@ -91,7 +91,7 @@ dotnet publish -c Release -r win-x64 --self-contained false
 **Network:** `P:\UniversityAutoSetup\Logs\{ServiceTag}_{ComputerName} - {Date}\`
 
 Files generated:
-- `UniversityAutoSetup_v3.0.0_{timestamp}.log` - Main log
+- `UniversityAutoSetup_v2.0.0_{timestamp}.log` - Main log
 - `SystemInfo_{timestamp}.txt` - Asset details
 - `DCU_{timestamp}.log` - Dell Command Update output
 - `Summary_{timestamp}.html` - HTML report

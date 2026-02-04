@@ -112,6 +112,9 @@ public partial class TasksView : Page
             {
                 _lastReportPath = results.ReportPath;
                 BtnViewReport.Visibility = Visibility.Visible;
+
+                // Auto-open the report in the default browser
+                _reportService.OpenInBrowser(results.ReportPath);
             }
 
             // Offer restart if needed
@@ -293,13 +296,14 @@ public partial class TasksView : Page
         {
             statusText.Text = text;
 
+            // App State branded status colors
             var (background, foreground) = status switch
             {
-                TaskStatus.Success => (Color.FromRgb(223, 246, 221), Color.FromRgb(16, 124, 16)),
-                TaskStatus.Warning => (Color.FromRgb(255, 244, 206), Color.FromRgb(255, 140, 0)),
-                TaskStatus.Error => (Color.FromRgb(253, 231, 233), Color.FromRgb(209, 52, 56)),
-                TaskStatus.Running => (Color.FromRgb(204, 229, 255), Color.FromRgb(0, 120, 215)),
-                _ => (Color.FromRgb(240, 240, 240), Color.FromRgb(102, 102, 102))
+                TaskStatus.Success => (Color.FromRgb(232, 245, 232), Color.FromRgb(105, 170, 97)),   // Grass Green
+                TaskStatus.Warning => (Color.FromRgb(255, 248, 225), Color.FromRgb(215, 165, 39)),   // Dark Gold
+                TaskStatus.Error => (Color.FromRgb(255, 235, 232), Color.FromRgb(198, 96, 42)),      // Brick Orange
+                TaskStatus.Running => (Color.FromRgb(225, 240, 250), Color.FromRgb(3, 101, 156)),    // Lake Blue
+                _ => (Color.FromRgb(240, 240, 240), Color.FromRgb(76, 72, 71))                       // Dark Gray
             };
 
             statusBorder.Background = new SolidColorBrush(background);
