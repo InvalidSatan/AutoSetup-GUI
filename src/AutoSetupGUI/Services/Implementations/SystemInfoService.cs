@@ -39,35 +39,81 @@ public class SystemInfoService : ISystemInfoService
 
         await Task.Run(() =>
         {
-            // BIOS Information
-            var (serialNumber, biosVersion, releaseDate) = _wmiHelper.GetBiosInfo();
-            info.ServiceTag = serialNumber;
-            info.BiosVersion = biosVersion;
-            info.BiosReleaseDate = releaseDate;
+            try
+            {
+                // BIOS Information
+                var (serialNumber, biosVersion, releaseDate) = _wmiHelper.GetBiosInfo();
+                info.ServiceTag = serialNumber;
+                info.BiosVersion = biosVersion;
+                info.BiosReleaseDate = releaseDate;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error collecting BIOS information");
+                info.ServiceTag = "Error";
+                info.BiosVersion = "Error";
+                info.BiosReleaseDate = "Error";
+            }
 
-            // Computer System Information
-            var (manufacturer, model, domain, partOfDomain) = _wmiHelper.GetComputerSystemInfo();
-            info.Manufacturer = manufacturer;
-            info.Model = model;
-            info.DomainName = domain;
-            info.IsDomainJoined = partOfDomain;
+            try
+            {
+                // Computer System Information
+                var (manufacturer, model, domain, partOfDomain) = _wmiHelper.GetComputerSystemInfo();
+                info.Manufacturer = manufacturer;
+                info.Model = model;
+                info.DomainName = domain;
+                info.IsDomainJoined = partOfDomain;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error collecting computer system information");
+                info.Manufacturer = "Error";
+                info.Model = "Error";
+                info.DomainName = "Error";
+            }
 
-            // Operating System Information
-            var (osName, osVersion, osBuild, osArch, lastBoot) = _wmiHelper.GetOperatingSystemInfo();
-            info.OSName = osName;
-            info.OSVersion = osVersion;
-            info.OSBuild = osBuild;
-            info.OSArchitecture = osArch;
-            info.LastBootTime = lastBoot;
+            try
+            {
+                // Operating System Information
+                var (osName, osVersion, osBuild, osArch, lastBoot) = _wmiHelper.GetOperatingSystemInfo();
+                info.OSName = osName;
+                info.OSVersion = osVersion;
+                info.OSBuild = osBuild;
+                info.OSArchitecture = osArch;
+                info.LastBootTime = lastBoot;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error collecting OS information");
+                info.OSName = "Error";
+                info.OSVersion = "Error";
+                info.OSBuild = "Error";
+                info.OSArchitecture = "Error";
+            }
 
-            // Processor Information
-            var (procName, cores, logicalProcs) = _wmiHelper.GetProcessorInfo();
-            info.ProcessorName = procName;
-            info.ProcessorCores = cores;
-            info.ProcessorLogicalProcessors = logicalProcs;
+            try
+            {
+                // Processor Information
+                var (procName, cores, logicalProcs) = _wmiHelper.GetProcessorInfo();
+                info.ProcessorName = procName;
+                info.ProcessorCores = cores;
+                info.ProcessorLogicalProcessors = logicalProcs;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error collecting processor information");
+                info.ProcessorName = "Error";
+            }
 
-            // Memory
-            info.TotalRAMBytes = _wmiHelper.GetTotalPhysicalMemory();
+            try
+            {
+                // Memory
+                info.TotalRAMBytes = _wmiHelper.GetTotalPhysicalMemory();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error collecting memory information");
+            }
 
             // Network Adapters
             CollectNetworkInfo(info);
@@ -163,8 +209,16 @@ public class SystemInfoService : ISystemInfoService
 
     public string GetServiceTag()
     {
-        var (serialNumber, _, _) = _wmiHelper.GetBiosInfo();
-        return serialNumber;
+        try
+        {
+            var (serialNumber, _, _) = _wmiHelper.GetBiosInfo();
+            return serialNumber;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error getting service tag");
+            return "Unknown";
+        }
     }
 
     public string GetComputerName()

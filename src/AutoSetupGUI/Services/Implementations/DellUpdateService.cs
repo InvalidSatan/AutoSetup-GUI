@@ -34,8 +34,16 @@ public class DellUpdateService : IDellUpdateService
 
     public bool IsDellSystem()
     {
-        var (manufacturer, _, _, _) = _wmiHelper.GetComputerSystemInfo();
-        return manufacturer.Contains("Dell", StringComparison.OrdinalIgnoreCase);
+        try
+        {
+            var (manufacturer, _, _, _) = _wmiHelper.GetComputerSystemInfo();
+            return manufacturer.Contains("Dell", StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error checking if Dell system");
+            return false;
+        }
     }
 
     public bool IsInstalled()

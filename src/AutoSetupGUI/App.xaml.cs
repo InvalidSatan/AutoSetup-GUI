@@ -25,22 +25,28 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // Check for administrative privileges
+        // Set up global exception handlers
+        AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+        DispatcherUnhandledException += App_DispatcherUnhandledException;
+        TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
+
+        // Check for administrative privileges - auto-elevate if needed
         if (!AdminPrivilegeChecker.IsRunningAsAdmin())
         {
-            MessageBox.Show(
-                "This application requires administrative privileges to function properly.\n\n" +
-                "Please run the application as Administrator.",
-                "Administrative Rights Required",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-
-            // Attempt to restart with admin privileges
+            // Attempt to restart with admin privileges silently
             if (AdminPrivilegeChecker.RestartAsAdmin())
             {
                 Shutdown();
                 return;
             }
+
+            // If elevation failed (user declined UAC or other error), show message and continue anyway
+            MessageBox.Show(
+                "This application requires administrative privileges for full functionality.\n\n" +
+                "Some features may not work correctly without admin rights.",
+                "Administrative Rights Recommended",
+                MessageBoxButton.OK,
+                MessageBoxImage.Warning);
         }
 
         // Build configuration
@@ -53,6 +59,37 @@ public partial class App : Application
         Services = ConfigureServices();
 
         Log.Information("University Auto Setup v3.0 starting...");
+    }
+
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        var exception = e.ExceptionObject as Exception;
+        Log.Error(exception, "Unhandled domain exception");
+
+        MessageBox.Show(
+            $"An unexpected error occurred:\n\n{exception?.Message}\n\nThe application will continue running.",
+            "Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+    }
+
+    private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
+    {
+        Log.Error(e.Exception, "Unhandled dispatcher exception");
+
+        MessageBox.Show(
+            $"An unexpected error occurred:\n\n{e.Exception.Message}\n\nThe application will continue running.",
+            "Error",
+            MessageBoxButton.OK,
+            MessageBoxImage.Error);
+
+        e.Handled = true; // Prevent crash
+    }
+
+    private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        Log.Error(e.Exception, "Unobserved task exception");
+        e.SetObserved(); // Prevent crash
     }
 
     private static IConfiguration BuildConfiguration()
