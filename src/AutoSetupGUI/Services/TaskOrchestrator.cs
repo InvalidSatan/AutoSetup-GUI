@@ -26,6 +26,7 @@ public class TaskOrchestrator
     public event EventHandler<TaskProgressEventArgs>? TaskProgressChanged;
     public event EventHandler<string>? StatusChanged;
     public event EventHandler<IndividualTaskProgressEventArgs>? IndividualTaskProgress;
+    public event EventHandler<SCCMActionResult>? SCCMActionProgress;
 
     public TaskOrchestrator(
         ILogger<TaskOrchestrator> logger,
@@ -116,6 +117,8 @@ public class TaskOrchestrator
                     {
                         _loggingService.Log($"{r.Action.Name}: {r.Status} - {r.Message}",
                             r.Status == TaskStatus.Success ? LogLevel.Success : LogLevel.Warning);
+                        // Fire event for individual SCCM action progress
+                        SCCMActionProgress?.Invoke(this, r);
                     }),
                     cancellationToken);
 

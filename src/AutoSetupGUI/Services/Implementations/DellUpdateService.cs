@@ -385,6 +385,9 @@ public class DellUpdateService : IDellUpdateService
             return result;
         }
 
+        // DCU 5.x /configure syntax with -silent flag (per working script)
+        // -autoSuspendBitLocker=enable: Automatically suspend BitLocker for BIOS updates
+        // -userConsent=disable: Don't prompt user for consent
         var configArgs = _configuration.GetValue<string>("DellCommandUpdate:ConfigureArgs")
             ?? "/configure -silent -autoSuspendBitLocker=enable -userConsent=disable";
 
@@ -438,7 +441,12 @@ public class DellUpdateService : IDellUpdateService
         var maxRetries = _configuration.GetValue("DellCommandUpdate:MaxRetries", 3);
         var retryDelay = _configuration.GetValue("DellCommandUpdate:RetryDelaySeconds", 10);
         var retryableCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:Retryable").Get<int[]>() ?? new[] { 5, 7, 8 };
-        var noUpdatesCode = _configuration.GetValue("DellCommandUpdate:ExitCodes:NoUpdates", 1);
+
+        // DCU 5.x exit codes for scan:
+        // 0 = Updates available
+        // 500 = No updates available
+        // 1 = Reboot required from previous operation
+        var noUpdatesCodes = new[] { 500 };
 
         var logPath = Path.Combine(Path.GetTempPath(), $"dcu_scan_{DateTime.Now:yyyyMMdd_HHmmss}.log");
         var scanArgs = $"/scan -outputLog=\"{logPath}\"";
@@ -472,12 +480,21 @@ public class DellUpdateService : IDellUpdateService
                     _logger.LogInformation("DCU scan completed - updates available");
                     return result;
                 }
-                else if (processResult.ExitCode == noUpdatesCode)
+                else if (noUpdatesCodes.Contains(processResult.ExitCode))
                 {
                     result.Success = true;
                     result.UpdatesAvailable = false;
                     result.Message = "No updates available";
-                    _logger.LogInformation("DCU scan completed - no updates available");
+                    _logger.LogInformation("DCU scan completed - no updates available (exit code {ExitCode})", processResult.ExitCode);
+                    return result;
+                }
+                else if (processResult.ExitCode == 1)
+                {
+                    // Exit code 1 = Reboot required from previous operation
+                    result.Success = true;
+                    result.UpdatesAvailable = false;
+                    result.Message = "Reboot required before scan can complete";
+                    _logger.LogWarning("DCU scan: reboot required from previous operation");
                     return result;
                 }
                 else if (retryableCodes.Contains(processResult.ExitCode) && attempt <= maxRetries)
@@ -531,10 +548,20 @@ public class DellUpdateService : IDellUpdateService
             return result;
         }
 
-        var successCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:Success").Get<int[]>() ?? new[] { 0, 2, 3 };
+        // DCU 5.x exit codes (per working script):
+        // 0 = Success, no reboot required
+        // 1 = Success, soft reboot required
+        // 5 = Success, hard reboot required
+        // 500 = No updates available
+        var successCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:Success").Get<int[]>() ?? new[] { 0 };
+        var rebootRequiredCodes = _configuration.GetSection("DellCommandUpdate:ExitCodes:RebootRequired").Get<int[]>() ?? new[] { 1, 5 };
+        var noUpdatesCodes = new[] { _configuration.GetValue("DellCommandUpdate:ExitCodes:NoUpdates", 500) };
 
         var logPath = Path.Combine(Path.GetTempPath(), $"dcu_update_{DateTime.Now:yyyyMMdd_HHmmss}.log");
-        var updateArgs = $"/applyUpdates -forceUpdate -reboot=disable -outputLog=\"{logPath}\"";
+
+        // Build update arguments from config (matching original script approach)
+        var rebootArg = _configuration.GetValue<string>("DellCommandUpdate:RebootArgument") ?? "-reboot=disable";
+        var updateArgs = $"/applyUpdates -silent -autoSuspendBitLocker=enable {rebootArg} -outputLog=\"{logPath}\"";
 
         try
         {
@@ -553,18 +580,21 @@ public class DellUpdateService : IDellUpdateService
             if (successCodes.Contains(processResult.ExitCode))
             {
                 result.Status = TaskStatus.Success;
-
-                if (processResult.ExitCode == 2 || processResult.ExitCode == 3)
-                {
-                    result.RequiresRestart = true;
-                    result.Message = "Updates applied successfully - restart required";
-                    _logger.LogInformation("Dell updates applied - restart required");
-                }
-                else
-                {
-                    result.Message = "Updates applied successfully";
-                    _logger.LogInformation("Dell updates applied successfully");
-                }
+                result.Message = "Updates applied successfully";
+                _logger.LogInformation("Dell updates applied successfully");
+            }
+            else if (rebootRequiredCodes.Contains(processResult.ExitCode))
+            {
+                result.Status = TaskStatus.Success;
+                result.RequiresRestart = true;
+                result.Message = "Updates applied successfully - restart required";
+                _logger.LogInformation("Dell updates applied - restart required (exit code {ExitCode})", processResult.ExitCode);
+            }
+            else if (noUpdatesCodes.Contains(processResult.ExitCode))
+            {
+                result.Status = TaskStatus.Success;
+                result.Message = "No updates needed";
+                _logger.LogInformation("Dell updates: no updates needed");
             }
             else
             {

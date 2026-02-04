@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -21,6 +22,7 @@ public partial class TasksView : Page
     private readonly IImageCheckService _imageCheckService;
     private readonly IReportService _reportService;
 
+    private readonly ObservableCollection<SCCMActionViewModel> _sccmActionViewModels = new();
     private string? _lastReportPath;
     private bool _isRunning;
 
@@ -38,14 +40,21 @@ public partial class TasksView : Page
         _orchestrator.TaskProgressChanged += Orchestrator_TaskProgressChanged;
         _orchestrator.StatusChanged += Orchestrator_StatusChanged;
         _orchestrator.IndividualTaskProgress += Orchestrator_IndividualTaskProgress;
+        _orchestrator.SCCMActionProgress += Orchestrator_SCCMActionProgress;
 
         Loaded += TasksView_Loaded;
     }
 
     private void TasksView_Loaded(object sender, RoutedEventArgs e)
     {
-        // Load SCCM actions list
-        SCCMActionsList.ItemsSource = _sccmService.GetConfiguredActions();
+        // Load SCCM actions list with observable view models
+        var actions = _sccmService.GetConfiguredActions();
+        _sccmActionViewModels.Clear();
+        foreach (var action in actions)
+        {
+            _sccmActionViewModels.Add(new SCCMActionViewModel(action));
+        }
+        SCCMActionsList.ItemsSource = _sccmActionViewModels;
 
         // Check if Dell system
         if (!_dellUpdateService.IsDellSystem())
@@ -89,7 +98,10 @@ public partial class TasksView : Page
         if (options.RunGroupPolicy)
             SetStatus(StatusGP, TxtStatusGP, "Pending", TaskStatus.Pending);
         if (options.RunSCCMActions)
+        {
             SetStatus(StatusSCCM, TxtStatusSCCM, "Pending", TaskStatus.Pending);
+            ResetSCCMActionStatuses();
+        }
         if (options.RunDellUpdates)
             SetStatus(StatusDell, TxtStatusDell, "Pending", TaskStatus.Pending);
         if (options.RunImageChecks)
@@ -229,6 +241,29 @@ public partial class TasksView : Page
         return $"{duration.TotalSeconds:F1}s";
     }
 
+    private void Orchestrator_SCCMActionProgress(object? sender, SCCMActionResult e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Find the matching view model and update its status
+            var viewModel = _sccmActionViewModels.FirstOrDefault(vm =>
+                vm.ScheduleId == e.Action.ScheduleId);
+
+            if (viewModel != null)
+            {
+                viewModel.UpdateFromResult(e);
+            }
+        });
+    }
+
+    private void ResetSCCMActionStatuses()
+    {
+        foreach (var vm in _sccmActionViewModels)
+        {
+            vm.Reset();
+        }
+    }
+
     private async void BtnRunGP_Click(object sender, RoutedEventArgs e)
     {
         if (_isRunning) return;
@@ -258,7 +293,18 @@ public partial class TasksView : Page
         try
         {
             SetStatus(StatusSCCM, TxtStatusSCCM, "Running", TaskStatus.Running);
-            var results = await _sccmService.RunAllActionsAsync();
+            ResetSCCMActionStatuses();
+
+            var results = await _sccmService.RunAllActionsAsync(
+                new Progress<SCCMActionResult>(r =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        var viewModel = _sccmActionViewModels.FirstOrDefault(vm =>
+                            vm.ScheduleId == r.Action.ScheduleId);
+                        viewModel?.UpdateFromResult(r);
+                    });
+                }));
 
             var successCount = results.Count(r => r.Status == TaskStatus.Success);
             var totalCount = results.Count();

@@ -133,6 +133,16 @@ public class SCCMService : ISCCMService
             if (cancellationToken.IsCancellationRequested)
                 break;
 
+            // Report that the action is starting
+            var startingResult = new SCCMActionResult
+            {
+                Action = action,
+                Status = TaskStatus.Running,
+                ExecutedAt = DateTime.Now,
+                Message = "Running..."
+            };
+            progress?.Report(startingResult);
+
             var result = await RunActionAsync(action, cancellationToken);
             results.Add(result);
             progress?.Report(result);

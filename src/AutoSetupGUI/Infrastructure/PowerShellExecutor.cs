@@ -127,15 +127,25 @@ public class PowerShellExecutor
     }
 
     /// <summary>
-    /// Gets Windows activation status using slmgr.vbs.
+    /// Gets Windows activation status using WMI SoftwareLicensingProduct.
+    /// LicenseStatus values: 0=Unlicensed, 1=Licensed, 2=OOBGrace, 3=OOTGrace, 4=NonGenuineGrace, 5=Notification
+    /// For KMS/Volume licensing, status 1 = properly activated.
     /// </summary>
     public async Task<(bool IsActivated, string Status)> GetWindowsActivationStatusAsync()
     {
         try
         {
+            // More robust query that handles Windows Education, Enterprise, Pro, etc.
+            // PartialProductKey being non-null indicates a license key is installed
+            // ApplicationId for Windows is 55c92734-d682-4d71-983e-d6ec3f16059f
             var script = @"
-                $activation = Get-CimInstance -ClassName SoftwareLicensingProduct |
-                    Where-Object { $_.Name -like '*Windows*' -and $_.LicenseStatus -ne 0 } |
+                $windowsAppId = '55c92734-d682-4d71-983e-d6ec3f16059f'
+                $activation = Get-CimInstance -ClassName SoftwareLicensingProduct -ErrorAction SilentlyContinue |
+                    Where-Object {
+                        $_.ApplicationId -eq $windowsAppId -and
+                        $_.PartialProductKey -ne $null -and
+                        $_.PartialProductKey -ne ''
+                    } |
                     Select-Object -First 1
 
                 if ($activation) {
@@ -149,9 +159,18 @@ public class PowerShellExecutor
                         6 { 'ExtendedGrace' }
                         default { 'Unknown' }
                     }
-                    Write-Output ""$($activation.LicenseStatus):$status""
+                    $productName = $activation.Name -replace 'Windows.*,\s*', ''
+                    Write-Output ""$($activation.LicenseStatus)|$status|$productName""
                 } else {
-                    Write-Output ""0:Unlicensed""
+                    # Fallback: try slmgr approach
+                    $slmgrOutput = cscript //nologo ""$env:SystemRoot\System32\slmgr.vbs"" /dli 2>&1 | Out-String
+                    if ($slmgrOutput -match 'License Status:\s*Licensed') {
+                        Write-Output ""1|Licensed|Windows (slmgr)""
+                    } elseif ($slmgrOutput -match 'License Status:\s*(\w+)') {
+                        Write-Output ""0|$($Matches[1])|Windows (slmgr)""
+                    } else {
+                        Write-Output ""0|Unknown|Unable to determine""
+                    }
                 }
             ";
 
@@ -159,10 +178,16 @@ public class PowerShellExecutor
 
             if (result.Success && result.Output.Count > 0)
             {
-                var parts = result.Output[0].Split(':');
-                var licenseStatus = int.Parse(parts[0]);
-                var status = parts.Length > 1 ? parts[1] : "Unknown";
-                return (licenseStatus == 1, status);
+                var parts = result.Output[0].Split('|');
+                var licenseStatus = int.TryParse(parts[0], out var status) ? status : 0;
+                var statusText = parts.Length > 1 ? parts[1] : "Unknown";
+                var productName = parts.Length > 2 ? parts[2] : "";
+
+                // Licensed (1) is the only fully activated state
+                var isActivated = licenseStatus == 1;
+                var fullStatus = string.IsNullOrEmpty(productName) ? statusText : $"{statusText} ({productName})";
+
+                return (isActivated, fullStatus);
             }
 
             return (false, "Unknown");
