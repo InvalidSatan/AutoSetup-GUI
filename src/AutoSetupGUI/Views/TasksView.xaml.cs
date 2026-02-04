@@ -251,19 +251,11 @@ public partial class TasksView : Page
                 // The viewer also shows the restart button if needed
                 _reportService.ShowReportViewer(results.ReportPath, results.RequiresRestart);
             }
-            else if (results.RequiresRestart)
-            {
-                // No report but restart needed - show message box
-                var result = MessageBox.Show(
-                    "Some updates require a restart to complete. Would you like to restart now?",
-                    "Restart Required",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Question);
 
-                if (result == MessageBoxResult.Yes)
-                {
-                    System.Diagnostics.Process.Start("shutdown", "/r /t 30 /c \"Restarting to complete setup updates...\"");
-                }
+            // Always show restart prompt if required, even if report is shown
+            if (results.RequiresRestart)
+            {
+                ShowRestartNotification();
             }
         }
         catch (Exception ex)
@@ -347,16 +339,10 @@ public partial class TasksView : Page
             _stateSaveTimer?.Dispose();
             _stateSaveTimer = null;
 
-            if (_currentState != null)
-            {
-                _currentState.IsRunning = false;
-                _currentState.IsComplete = true;
-                _currentState.LastUpdateTime = DateTime.Now;
-                NetworkResilienceManager.SaveState(_currentState);
-            }
-
-            // Clear state after a short delay (allow any final saves)
-            Task.Delay(1000).ContinueWith(_ => NetworkResilienceManager.ClearState());
+            // Clear the state immediately - tasks are done
+            // This is important for cleanup to work properly on exit
+            _currentState = null;
+            NetworkResilienceManager.ClearState();
         }
         catch
         {
@@ -923,6 +909,55 @@ public partial class TasksView : Page
             statusBorder.Background = new SolidColorBrush(background);
             statusText.Foreground = new SolidColorBrush(foreground);
         });
+    }
+
+    /// <summary>
+    /// Shows a restart notification dialog with options to restart now or later.
+    /// </summary>
+    private void ShowRestartNotification()
+    {
+        // Update final status to indicate restart is needed
+        TxtFinalStatus.Text = "⚠️ Restart Required - Some updates require a restart to complete.";
+        TxtFinalStatus.Foreground = new SolidColorBrush(Color.FromRgb(215, 165, 39)); // Gold warning color
+
+        var result = MessageBox.Show(
+            "Some updates require a system restart to complete.\n\n" +
+            "Would you like to restart now?\n\n" +
+            "• Click 'Yes' to restart immediately (30 second countdown)\n" +
+            "• Click 'No' to restart later manually",
+            "Restart Required",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result == MessageBoxResult.Yes)
+        {
+            try
+            {
+                // Clear state before restart so cleanup can happen
+                NetworkResilienceManager.ClearState();
+
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "shutdown",
+                    Arguments = "/r /t 30 /c \"Restarting to complete University Auto Setup updates...\"",
+                    UseShellExecute = true,
+                    CreateNoWindow = true
+                });
+
+                TxtFinalStatus.Text = "🔄 Restarting in 30 seconds... Close any open work now.";
+                TxtFinalStatus.Foreground = new SolidColorBrush(Color.FromRgb(3, 101, 156)); // Blue info color
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to initiate restart: {ex.Message}\n\nPlease restart manually.",
+                    "Restart Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        else
+        {
+            TxtFinalStatus.Text = "⚠️ Setup complete - Please restart your computer to finish updates.";
+        }
     }
 }
 

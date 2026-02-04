@@ -119,10 +119,18 @@ public partial class MainWindow : Window
 
     private void BtnRunAll_Click(object sender, RoutedEventArgs e)
     {
-        NavTasks.IsChecked = true;
-        // Use cached tasks view
+        // Create or get the cached tasks view
         _tasksView ??= new TasksView();
-        _tasksView.RunAllTasks();
+
+        // Navigate to tasks view first
+        ContentFrame.Navigate(_tasksView);
+        NavTasks.IsChecked = true;
+
+        // Use dispatcher to ensure the view is fully loaded before starting tasks
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Loaded, new Action(() =>
+        {
+            _tasksView.RunAllTasks();
+        }));
     }
 
     private async void BtnCopyInfo_Click(object sender, RoutedEventArgs e)
