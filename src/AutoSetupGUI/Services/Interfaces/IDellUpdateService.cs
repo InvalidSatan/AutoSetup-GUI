@@ -1,4 +1,5 @@
 using AutoSetupGUI.Models;
+using AutoSetupGUI.Services.Implementations;
 
 namespace AutoSetupGUI.Services.Interfaces;
 
@@ -7,6 +8,11 @@ namespace AutoSetupGUI.Services.Interfaces;
 /// </summary>
 public interface IDellUpdateService
 {
+    /// <summary>
+    /// Event raised for detailed per-update progress during update application.
+    /// </summary>
+    event Action<DellUpdateProgressInfo>? UpdateProgress;
+
     /// <summary>
     /// Checks if the current system is a Dell machine.
     /// </summary>

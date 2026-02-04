@@ -575,6 +575,11 @@ public class DellUpdateService : IDellUpdateService
         return result;
     }
 
+    /// <summary>
+    /// Event for reporting detailed per-update progress.
+    /// </summary>
+    public event Action<DellUpdateProgressInfo>? UpdateProgress;
+
     public async Task<TaskResult> ApplyUpdatesAsync(
         IProgress<string>? progress = null,
         CancellationToken cancellationToken = default)
@@ -620,15 +625,20 @@ public class DellUpdateService : IDellUpdateService
 
         _logger.LogInformation("DCU command: {DcuPath} {Args}", dcuPath, updateArgs);
 
+        // Track update progress state
+        var updateState = new DellUpdateProgressState();
+
         try
         {
-            progress?.Report("Applying Dell updates (this may take 15-30 minutes)...");
-            _logger.LogInformation("Starting Dell update application - this may take a while...");
+            progress?.Report("Starting Dell updates...");
+            _logger.LogInformation("Starting Dell update application with real-time progress...");
 
-            // Use a longer timeout for updates - BIOS and firmware updates can take a long time
-            var processResult = await _processRunner.RunAsync(
+            // Use real-time output capture to parse progress
+            var processResult = await _processRunner.RunWithRealtimeOutputAsync(
                 dcuPath,
                 updateArgs,
+                onOutputLine: line => ParseAndReportProgress(line, updateState, progress),
+                onErrorLine: line => _logger.LogWarning("DCU stderr: {Line}", line),
                 timeoutMs: 3600000, // 60 minutes timeout
                 cancellationToken: cancellationToken);
 
@@ -636,11 +646,6 @@ public class DellUpdateService : IDellUpdateService
             result.DetailedOutput = processResult.CombinedOutput;
 
             _logger.LogInformation("DCU applyUpdates exited with code: {ExitCode}", processResult.ExitCode);
-            _logger.LogInformation("DCU stdout:\n{Output}", processResult.StandardOutput);
-            if (!string.IsNullOrEmpty(processResult.StandardError))
-            {
-                _logger.LogWarning("DCU stderr:\n{Error}", processResult.StandardError);
-            }
 
             // Read the detailed log file
             if (File.Exists(logPath))
@@ -668,14 +673,18 @@ public class DellUpdateService : IDellUpdateService
             if (successCodes.Contains(processResult.ExitCode))
             {
                 result.Status = TaskStatus.Success;
-                result.Message = "All updates applied successfully";
+                result.Message = updateState.CompletedCount > 0
+                    ? $"{updateState.CompletedCount} update(s) applied successfully"
+                    : "All updates applied successfully";
                 _logger.LogInformation("=== Dell updates applied successfully (no reboot needed) ===");
             }
             else if (rebootRequiredCodes.Contains(processResult.ExitCode))
             {
                 result.Status = TaskStatus.Success;
                 result.RequiresRestart = true;
-                result.Message = "Updates applied successfully - RESTART REQUIRED to complete";
+                result.Message = updateState.CompletedCount > 0
+                    ? $"{updateState.CompletedCount} update(s) applied - RESTART REQUIRED"
+                    : "Updates applied successfully - RESTART REQUIRED to complete";
                 _logger.LogInformation("=== Dell updates applied - RESTART REQUIRED (exit code {ExitCode}) ===", processResult.ExitCode);
                 progress?.Report("Updates applied - RESTART REQUIRED to complete installation");
             }
@@ -702,6 +711,194 @@ public class DellUpdateService : IDellUpdateService
         result.EndTime = DateTime.Now;
         _logger.LogInformation("Dell update application completed in {Duration}", result.Duration);
         return result;
+    }
+
+    /// <summary>
+    /// Parses DCU CLI output and reports per-update progress.
+    /// </summary>
+    private void ParseAndReportProgress(string line, DellUpdateProgressState state, IProgress<string>? progress)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+            return;
+
+        _logger.LogDebug("DCU output: {Line}", line);
+
+        // DCU CLI output patterns:
+        // "Number of applicable updates for the current system configuration: X"
+        // "Downloading update X of Y: <update name>"
+        // "Download progress: XX%"
+        // "Installing update X of Y: <update name>"
+        // "Install progress: XX%"
+        // "Update installed successfully: <update name>"
+        // "The system needs a reboot to complete the update"
+
+        // Check for total updates count
+        var totalMatch = System.Text.RegularExpressions.Regex.Match(line,
+            @"Number of applicable updates.*?:\s*(\d+)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (totalMatch.Success)
+        {
+            state.TotalUpdates = int.Parse(totalMatch.Groups[1].Value);
+            progress?.Report($"Found {state.TotalUpdates} update(s) to apply");
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "Starting",
+                TotalUpdates = state.TotalUpdates,
+                Message = $"Found {state.TotalUpdates} update(s) to apply"
+            });
+            return;
+        }
+
+        // Check for downloading update
+        var downloadingMatch = System.Text.RegularExpressions.Regex.Match(line,
+            @"Downloading\s+(?:update\s+)?(\d+)\s+of\s+(\d+)[:\s]+(.+)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (downloadingMatch.Success)
+        {
+            state.CurrentUpdateIndex = int.Parse(downloadingMatch.Groups[1].Value);
+            state.TotalUpdates = int.Parse(downloadingMatch.Groups[2].Value);
+            state.CurrentUpdateName = downloadingMatch.Groups[3].Value.Trim();
+            state.CurrentPhase = "Downloading";
+            state.DownloadProgress = 0;
+
+            var msg = $"Downloading ({state.CurrentUpdateIndex}/{state.TotalUpdates}): {state.CurrentUpdateName}";
+            progress?.Report(msg);
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "Downloading",
+                CurrentUpdateIndex = state.CurrentUpdateIndex,
+                TotalUpdates = state.TotalUpdates,
+                CurrentUpdateName = state.CurrentUpdateName,
+                DownloadProgress = 0,
+                Message = msg
+            });
+            return;
+        }
+
+        // Check for download progress percentage
+        var downloadProgressMatch = System.Text.RegularExpressions.Regex.Match(line,
+            @"Download(?:ing)?\s+progress[:\s]+(\d+)%",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (downloadProgressMatch.Success && state.CurrentPhase == "Downloading")
+        {
+            state.DownloadProgress = int.Parse(downloadProgressMatch.Groups[1].Value);
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "Downloading",
+                CurrentUpdateIndex = state.CurrentUpdateIndex,
+                TotalUpdates = state.TotalUpdates,
+                CurrentUpdateName = state.CurrentUpdateName,
+                DownloadProgress = state.DownloadProgress,
+                Message = $"Downloading {state.CurrentUpdateName}: {state.DownloadProgress}%"
+            });
+            return;
+        }
+
+        // Check for installing update
+        var installingMatch = System.Text.RegularExpressions.Regex.Match(line,
+            @"Installing\s+(?:update\s+)?(\d+)\s+of\s+(\d+)[:\s]+(.+)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (installingMatch.Success)
+        {
+            state.CurrentUpdateIndex = int.Parse(installingMatch.Groups[1].Value);
+            state.TotalUpdates = int.Parse(installingMatch.Groups[2].Value);
+            state.CurrentUpdateName = installingMatch.Groups[3].Value.Trim();
+            state.CurrentPhase = "Installing";
+            state.InstallProgress = 0;
+
+            var msg = $"Installing ({state.CurrentUpdateIndex}/{state.TotalUpdates}): {state.CurrentUpdateName}";
+            progress?.Report(msg);
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "Installing",
+                CurrentUpdateIndex = state.CurrentUpdateIndex,
+                TotalUpdates = state.TotalUpdates,
+                CurrentUpdateName = state.CurrentUpdateName,
+                InstallProgress = 0,
+                Message = msg
+            });
+            return;
+        }
+
+        // Check for install progress percentage
+        var installProgressMatch = System.Text.RegularExpressions.Regex.Match(line,
+            @"Install(?:ing)?\s+progress[:\s]+(\d+)%",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (installProgressMatch.Success && state.CurrentPhase == "Installing")
+        {
+            state.InstallProgress = int.Parse(installProgressMatch.Groups[1].Value);
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "Installing",
+                CurrentUpdateIndex = state.CurrentUpdateIndex,
+                TotalUpdates = state.TotalUpdates,
+                CurrentUpdateName = state.CurrentUpdateName,
+                InstallProgress = state.InstallProgress,
+                Message = $"Installing {state.CurrentUpdateName}: {state.InstallProgress}%"
+            });
+            return;
+        }
+
+        // Check for update completed successfully
+        var completedMatch = System.Text.RegularExpressions.Regex.Match(line,
+            @"(?:Update\s+)?(?:installed|applied)\s+successfully[:\s]*(.+)?",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (completedMatch.Success)
+        {
+            state.CompletedCount++;
+            var updateName = completedMatch.Groups[1].Success
+                ? completedMatch.Groups[1].Value.Trim()
+                : state.CurrentUpdateName;
+
+            var msg = $"Completed ({state.CompletedCount}/{state.TotalUpdates}): {updateName}";
+            progress?.Report(msg);
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "Completed",
+                CurrentUpdateIndex = state.CompletedCount,
+                TotalUpdates = state.TotalUpdates,
+                CurrentUpdateName = updateName,
+                IsComplete = true,
+                Message = msg
+            });
+            state.CurrentPhase = "Idle";
+            return;
+        }
+
+        // Check for reboot required
+        if (line.Contains("reboot", StringComparison.OrdinalIgnoreCase) &&
+            line.Contains("required", StringComparison.OrdinalIgnoreCase))
+        {
+            progress?.Report("System restart required to complete updates");
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = "RebootRequired",
+                TotalUpdates = state.TotalUpdates,
+                CompletedCount = state.CompletedCount,
+                Message = "System restart required to complete updates"
+            });
+            return;
+        }
+
+        // For any other output, log it as activity
+        if (!string.IsNullOrWhiteSpace(line))
+        {
+            ReportUpdateProgress(new DellUpdateProgressInfo
+            {
+                Phase = state.CurrentPhase ?? "Working",
+                CurrentUpdateIndex = state.CurrentUpdateIndex,
+                TotalUpdates = state.TotalUpdates,
+                CurrentUpdateName = state.CurrentUpdateName,
+                Message = line,
+                IsRawOutput = true
+            });
+        }
+    }
+
+    private void ReportUpdateProgress(DellUpdateProgressInfo info)
+    {
+        try { UpdateProgress?.Invoke(info); }
+        catch { /* Ignore callback errors */ }
     }
 
     public async Task<TaskResult> RunCompleteUpdateAsync(
@@ -781,5 +978,61 @@ public class DellUpdateService : IDellUpdateService
 
         result.EndTime = DateTime.Now;
         return result;
+    }
+}
+
+/// <summary>
+/// Tracks the current state of Dell update progress parsing.
+/// </summary>
+internal class DellUpdateProgressState
+{
+    public int TotalUpdates { get; set; }
+    public int CurrentUpdateIndex { get; set; }
+    public string? CurrentUpdateName { get; set; }
+    public string? CurrentPhase { get; set; }
+    public int DownloadProgress { get; set; }
+    public int InstallProgress { get; set; }
+    public int CompletedCount { get; set; }
+}
+
+/// <summary>
+/// Information about Dell update progress for UI display.
+/// </summary>
+public class DellUpdateProgressInfo
+{
+    public string Phase { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public int TotalUpdates { get; set; }
+    public int CurrentUpdateIndex { get; set; }
+    public string? CurrentUpdateName { get; set; }
+    public int DownloadProgress { get; set; }
+    public int InstallProgress { get; set; }
+    public int CompletedCount { get; set; }
+    public bool IsComplete { get; set; }
+    public bool IsRawOutput { get; set; }
+
+    /// <summary>
+    /// Calculates overall progress percentage across all updates.
+    /// </summary>
+    public int OverallPercentage
+    {
+        get
+        {
+            if (TotalUpdates <= 0) return 0;
+
+            // Each update has 2 phases: download (50%) and install (50%)
+            // Calculate based on completed updates + current update progress
+            var completedProgress = CompletedCount * 100;
+            var currentProgress = 0;
+
+            if (Phase == "Downloading")
+                currentProgress = DownloadProgress / 2; // 0-50%
+            else if (Phase == "Installing")
+                currentProgress = 50 + (InstallProgress / 2); // 50-100%
+            else if (Phase == "Completed" && !IsComplete)
+                currentProgress = 0;
+
+            return (completedProgress + currentProgress) / TotalUpdates;
+        }
     }
 }

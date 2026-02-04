@@ -141,34 +141,100 @@
                         <!-- DCU Progress Details Panel -->
                         <Border x:Name="DellProgressPanel" Visibility="Collapsed" Background="#F8F9FA" CornerRadius="4" Margin="40,12,0,0" Padding="12">
                             <StackPanel>
-                                <!-- Current Phase -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <TextBlock Text="Phase:" FontWeight="SemiBold" Width="80"/>
-                                    <TextBlock x:Name="TxtDellPhase" Text="Initializing..." Foreground="{StaticResource InfoBrush}"/>
-                                </StackPanel>
-
-                                <!-- Progress Bar for DCU -->
-                                <Grid Margin="0,0,0,8">
-                                    <ProgressBar x:Name="DellProgressBar" Height="8" Value="0" Maximum="100"
-                                                 Style="{StaticResource ModernProgressBarStyle}"/>
+                                <!-- Overall Progress Header -->
+                                <Grid Margin="0,0,0,12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock x:Name="TxtDellPhase" Text="Initializing..." FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource InfoBrush}"/>
+                                        <TextBlock x:Name="TxtDellUpdatesCount" Text="Checking for updates..." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" x:Name="TxtDellOverallPercent" Text="0%" FontWeight="SemiBold" FontSize="18" Foreground="{StaticResource InfoBrush}" VerticalAlignment="Center"/>
                                 </Grid>
 
-                                <!-- Updates Found/Applied Counter -->
-                                <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                                    <TextBlock Text="Updates:" FontWeight="SemiBold" Width="80"/>
-                                    <TextBlock x:Name="TxtDellUpdatesCount" Text="Scanning..." Foreground="{StaticResource TextSecondaryBrush}"/>
-                                </StackPanel>
+                                <!-- Overall Progress Bar -->
+                                <ProgressBar x:Name="DellProgressBar" Height="6" Value="0" Maximum="100" Style="{StaticResource ModernProgressBarStyle}" Margin="0,0,0,12"/>
 
-                                <!-- Current Activity -->
-                                <TextBlock x:Name="TxtDellCurrentActivity" Text="" TextWrapping="Wrap"
-                                           Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                <!-- Current Update Info -->
+                                <Border x:Name="CurrentUpdatePanel" Visibility="Collapsed" Background="White" CornerRadius="4" Padding="12" Margin="0,0,0,8" BorderBrush="#E0E0E0" BorderThickness="1">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
 
-                                <!-- Live Log Output (scrollable) -->
-                                <Expander Header="View Live Output" Margin="0,8,0,0" IsExpanded="False">
+                                        <!-- Update Name -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" x:Name="TxtCurrentUpdateName" Text="Update Name" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <Border Grid.Row="0" Grid.Column="1" x:Name="CurrentUpdateStatusBadge" CornerRadius="4" Padding="8,2" Background="#E1F0FA">
+                                            <TextBlock x:Name="TxtCurrentUpdateStatus" Text="Downloading" FontSize="11" Foreground="#03659C"/>
+                                        </Border>
+
+                                        <!-- Download Progress -->
+                                        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="40"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Download" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <ProgressBar Grid.Column="1" x:Name="CurrentDownloadBar" Height="4" Value="0" Maximum="100" Style="{StaticResource ModernProgressBarStyle}" Margin="8,0"/>
+                                                <TextBlock Grid.Column="2" x:Name="TxtCurrentDownloadPercent" Text="0%" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                        </StackPanel>
+
+                                        <!-- Install Progress -->
+                                        <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Margin="0,6,0,0">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="40"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Install" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <ProgressBar Grid.Column="1" x:Name="CurrentInstallBar" Height="4" Value="0" Maximum="100" Style="{StaticResource ModernProgressBarStyle}" Margin="8,0"/>
+                                                <TextBlock Grid.Column="2" x:Name="TxtCurrentInstallPercent" Text="0%" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <!-- Completed Updates List -->
+                                <ItemsControl x:Name="CompletedUpdatesList" Margin="0,4,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="White" CornerRadius="4" Padding="12,8" Margin="0,0,0,4" BorderBrush="#E8F5E8" BorderThickness="1">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                    <Border Grid.Column="1" CornerRadius="4" Padding="8,2" Background="#E8F5E8">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="#69AA61"/>
+                                                    </Border>
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Current Activity (for misc messages) -->
+                                <TextBlock x:Name="TxtDellCurrentActivity" Text="" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
+
+                                <!-- Live Log Output (collapsible) -->
+                                <Expander Header="View Raw Output" Margin="0,8,0,0" IsExpanded="False">
                                     <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="0,8,0,0">
-                                        <ScrollViewer x:Name="DellLogScroller" Height="150" VerticalScrollBarVisibility="Auto">
+                                        <ScrollViewer x:Name="DellLogScroller" Height="120" VerticalScrollBarVisibility="Auto">
                                             <TextBox x:Name="TxtDellLiveLog" IsReadOnly="True" BorderThickness="0"
-                                                     FontFamily="Consolas" FontSize="11" TextWrapping="Wrap"
+                                                     FontFamily="Consolas" FontSize="10" TextWrapping="Wrap"
                                                      Background="Transparent" Padding="8"/>
                                         </ScrollViewer>
                                     </Border>

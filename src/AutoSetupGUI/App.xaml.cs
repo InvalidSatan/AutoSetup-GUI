@@ -21,9 +21,28 @@ public partial class App : Application
     public static IServiceProvider Services { get; private set; } = null!;
     public static IConfiguration Configuration { get; private set; } = null!;
 
+    /// <summary>
+    /// Indicates whether we're recovering from an interrupted session.
+    /// </summary>
+    public static bool IsRecoveryMode { get; private set; }
+
+    /// <summary>
+    /// The recovered state from a previous interrupted session.
+    /// </summary>
+    public static TaskExecutionState? RecoveredState { get; private set; }
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+
+        // FIRST: Check if running from network share - copy locally and relaunch
+        // This MUST happen before anything else to ensure resilience to network driver updates
+        if (NetworkResilienceManager.EnsureRunningLocally(e.Args))
+        {
+            // Relaunching from local copy - exit this instance
+            Shutdown();
+            return;
+        }
 
         // Set up global exception handlers
         AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -49,6 +68,9 @@ public partial class App : Application
                 MessageBoxImage.Warning);
         }
 
+        // Check for recovery from interrupted session
+        CheckForRecovery();
+
         // Build configuration
         Configuration = BuildConfiguration();
 
@@ -60,9 +82,62 @@ public partial class App : Application
 
         Log.Information("University Auto Setup v2.0 starting...");
 
+        if (IsRecoveryMode)
+        {
+            Log.Information("Recovery mode active - restoring from interrupted session");
+        }
+
+        if (NetworkResilienceManager.IsRunningFromLocalCopy())
+        {
+            Log.Information("Running from local copy at: {Path}", NetworkResilienceManager.LocalAppPath);
+
+            // Show notification that we're running from local copy
+            MessageBox.Show(
+                $"For stability during driver updates, this application has been copied to a local folder and is running from:\n\n{NetworkResilienceManager.LocalAppPath}\n\nThis prevents crashes if network drivers are updated.",
+                "Running from Local Copy",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
         // Create and show the main window AFTER services are configured
         var mainWindow = new Views.MainWindow();
         mainWindow.Show();
+    }
+
+    /// <summary>
+    /// Checks if we need to recover from an interrupted session.
+    /// </summary>
+    private void CheckForRecovery()
+    {
+        try
+        {
+            // Check if there's an active state file indicating interrupted tasks
+            if (NetworkResilienceManager.HasActiveState())
+            {
+                var state = NetworkResilienceManager.LoadState();
+                if (state != null && state.IsRunning && !state.IsComplete)
+                {
+                    // Check if it was recent (within the last 30 minutes)
+                    var timeSinceLastUpdate = DateTime.Now - state.LastUpdateTime;
+                    if (timeSinceLastUpdate < TimeSpan.FromMinutes(30))
+                    {
+                        IsRecoveryMode = true;
+                        RecoveredState = state;
+                    }
+                    else
+                    {
+                        // Stale state - clear it
+                        NetworkResilienceManager.ClearState();
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Ignore recovery check errors
+            IsRecoveryMode = false;
+            RecoveredState = null;
+        }
     }
 
     private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -210,6 +285,22 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Log.Information("University Auto Setup v2.0 shutting down...");
+
+        // Clean up local copy if running from one and tasks are complete
+        if (NetworkResilienceManager.IsRunningFromLocalCopy())
+        {
+            // Only clean up if there's no active/incomplete state (tasks finished)
+            if (!NetworkResilienceManager.HasActiveState())
+            {
+                Log.Information("Scheduling cleanup of local copy at: {Path}", NetworkResilienceManager.LocalAppPath);
+                NetworkResilienceManager.ScheduleSelfCleanup();
+            }
+            else
+            {
+                Log.Information("Skipping cleanup - tasks may still be running in background");
+            }
+        }
+
         Log.CloseAndFlush();
         base.OnExit(e);
     }

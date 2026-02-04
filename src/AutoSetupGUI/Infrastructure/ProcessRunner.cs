@@ -182,6 +182,107 @@ public class ProcessRunner
     {
         return RunAsync("cmd.exe", $"/c {command}", timeoutMs: timeoutMs, cancellationToken: cancellationToken);
     }
+
+    /// <summary>
+    /// Runs a process with real-time output callback for streaming progress updates.
+    /// </summary>
+    public async Task<ProcessResult> RunWithRealtimeOutputAsync(
+        string fileName,
+        string arguments = "",
+        Action<string>? onOutputLine = null,
+        Action<string>? onErrorLine = null,
+        string? workingDirectory = null,
+        int timeoutMs = 120000,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug("Starting process with realtime output: {FileName} {Arguments}", fileName, arguments);
+
+        var result = new ProcessResult
+        {
+            FileName = fileName,
+            Arguments = arguments,
+            StartTime = DateTime.Now
+        };
+
+        try
+        {
+            using var process = new Process();
+            process.StartInfo = new ProcessStartInfo
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                WorkingDirectory = workingDirectory ?? Environment.CurrentDirectory,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            var outputBuilder = new System.Text.StringBuilder();
+            var errorBuilder = new System.Text.StringBuilder();
+
+            process.OutputDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                {
+                    outputBuilder.AppendLine(e.Data);
+                    try { onOutputLine?.Invoke(e.Data); }
+                    catch { /* Ignore callback errors */ }
+                }
+            };
+
+            process.ErrorDataReceived += (_, e) =>
+            {
+                if (e.Data != null)
+                {
+                    errorBuilder.AppendLine(e.Data);
+                    try { onErrorLine?.Invoke(e.Data); }
+                    catch { /* Ignore callback errors */ }
+                }
+            };
+
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(timeoutMs);
+
+            try
+            {
+                await process.WaitForExitAsync(cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                result.TimedOut = true;
+                _logger.LogWarning("Process timed out after {Timeout}ms: {FileName}", timeoutMs, fileName);
+            }
+
+            result.EndTime = DateTime.Now;
+            result.ExitCode = process.ExitCode;
+            result.StandardOutput = outputBuilder.ToString();
+            result.StandardError = errorBuilder.ToString();
+            result.Success = result.ExitCode == 0 && !result.TimedOut;
+
+            _logger.LogDebug("Process completed: {FileName} with exit code {ExitCode}", fileName, result.ExitCode);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            result.EndTime = DateTime.Now;
+            result.Exception = ex;
+            result.Success = false;
+
+            _logger.LogError(ex, "Error running process: {FileName}", fileName);
+
+            return result;
+        }
+    }
 }
 
 /// <summary>

@@ -2,8 +2,10 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using AutoSetupGUI.Infrastructure;
 using AutoSetupGUI.Models;
 using AutoSetupGUI.Services;
+using AutoSetupGUI.Services.Implementations;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using TaskStatus = AutoSetupGUI.Models.TaskStatus;
@@ -23,8 +25,13 @@ public partial class TasksView : Page
     private readonly IReportService _reportService;
 
     private readonly ObservableCollection<SCCMActionViewModel> _sccmActionViewModels = new();
+    private readonly ObservableCollection<CompletedUpdateViewModel> _completedUpdates = new();
     private string? _lastReportPath;
     private bool _isRunning;
+
+    // State persistence for network resilience
+    private TaskExecutionState? _currentState;
+    private System.Timers.Timer? _stateSaveTimer;
 
     public TasksView()
     {
@@ -42,6 +49,9 @@ public partial class TasksView : Page
         _orchestrator.IndividualTaskProgress += Orchestrator_IndividualTaskProgress;
         _orchestrator.SCCMActionProgress += Orchestrator_SCCMActionProgress;
         _orchestrator.DellProgress += Orchestrator_DellProgress;
+
+        // Subscribe to detailed Dell update progress
+        _dellUpdateService.UpdateProgress += DellUpdateService_UpdateProgress;
 
         Loaded += TasksView_Loaded;
     }
@@ -64,6 +74,90 @@ public partial class TasksView : Page
             ChkDell.IsChecked = false;
             ChkDell.IsEnabled = false;
             BtnRunDell.IsEnabled = false;
+        }
+
+        // Check for recovery mode
+        if (App.IsRecoveryMode && App.RecoveredState != null)
+        {
+            RestoreFromRecovery(App.RecoveredState);
+        }
+    }
+
+    /// <summary>
+    /// Restores the UI state from a recovered session.
+    /// </summary>
+    private void RestoreFromRecovery(TaskExecutionState state)
+    {
+        try
+        {
+            // Show recovery notification
+            TxtFinalStatus.Text = "Recovered from interrupted session - Dell updates are continuing in background";
+            TxtFinalStatus.Foreground = new SolidColorBrush(Color.FromRgb(3, 101, 156)); // Info blue
+
+            // Restore task selection state
+            ChkGroupPolicy.IsChecked = state.RunGroupPolicy;
+            ChkSCCM.IsChecked = state.RunSCCMActions;
+            ChkDell.IsChecked = state.RunDellUpdates;
+            ChkImageChecks.IsChecked = state.RunImageChecks;
+
+            // Mark completed tasks
+            if (state.GroupPolicyComplete)
+            {
+                SetStatus(StatusGP, TxtStatusGP, "Success", TaskStatus.Success);
+            }
+            if (state.SCCMActionsComplete)
+            {
+                SetStatus(StatusSCCM, TxtStatusSCCM, "Success", TaskStatus.Success);
+            }
+            if (state.ImageChecksComplete)
+            {
+                SetStatus(StatusChecks, TxtStatusChecks, "Success", TaskStatus.Success);
+            }
+
+            // Restore Dell update state
+            if (state.RunDellUpdates && !state.DellUpdatesComplete)
+            {
+                SetStatus(StatusDell, TxtStatusDell, "Running (Recovered)", TaskStatus.Running);
+
+                // Show Dell progress panel with recovered state
+                DellProgressPanel.Visibility = Visibility.Visible;
+                TxtDellPhase.Text = state.CurrentDellPhase ?? "Continuing in background...";
+                TxtDellUpdatesCount.Text = $"{state.DellCompletedUpdates} of {state.DellTotalUpdates} update(s) complete";
+
+                // Restore completed updates list
+                foreach (var updateName in state.DellCompletedUpdateNames)
+                {
+                    _completedUpdates.Add(new CompletedUpdateViewModel
+                    {
+                        Name = updateName,
+                        StatusText = "Installed"
+                    });
+                }
+                CompletedUpdatesList.ItemsSource = _completedUpdates;
+
+                // Restore log messages
+                foreach (var msg in state.LogMessages)
+                {
+                    TxtDellLiveLog.Text += msg + "\n";
+                }
+                TxtDellLiveLog.Text += $"\n[{DateTime.Now:HH:mm:ss}] === Session recovered - DCU continuing in background ===\n";
+                DellLogScroller.ScrollToEnd();
+
+                // DCU is likely still running in background - we can monitor for completion
+                TxtDellCurrentActivity.Text = "Dell Command Update is continuing in the background. Updates will complete even if this window closes.";
+            }
+            else if (state.DellUpdatesComplete)
+            {
+                SetStatus(StatusDell, TxtStatusDell, "Success", TaskStatus.Success);
+            }
+
+            // Clear recovery state so we don't restore again
+            NetworkResilienceManager.ClearState();
+        }
+        catch
+        {
+            // Ignore recovery errors - just continue normally
+            NetworkResilienceManager.ClearState();
         }
     }
 
@@ -95,6 +189,9 @@ public partial class TasksView : Page
             RunImageChecks = ChkImageChecks.IsChecked == true
         };
 
+        // Initialize state persistence for network resilience
+        InitializeStatePersistence(options);
+
         // Reset all task statuses to pending before starting
         if (options.RunGroupPolicy)
             SetStatus(StatusGP, TxtStatusGP, "Pending", TaskStatus.Pending);
@@ -107,12 +204,7 @@ public partial class TasksView : Page
         {
             SetStatus(StatusDell, TxtStatusDell, "Pending", TaskStatus.Pending);
             // Reset Dell progress panel
-            DellProgressPanel.Visibility = Visibility.Collapsed;
-            TxtDellPhase.Text = "Initializing...";
-            DellProgressBar.Value = 0;
-            TxtDellUpdatesCount.Text = "Checking...";
-            TxtDellCurrentActivity.Text = "";
-            TxtDellLiveLog.Text = "";
+            ResetDellProgressPanel();
         }
         if (options.RunImageChecks)
             SetStatus(StatusChecks, TxtStatusChecks, "Pending", TaskStatus.Pending);
@@ -184,8 +276,95 @@ public partial class TasksView : Page
         {
             _isRunning = false;
             SetButtonsEnabled(true);
+
+            // Clean up state persistence - tasks completed (successfully or with error)
+            FinalizeStatePersistence();
         }
     }
+
+    #region State Persistence for Network Resilience
+
+    /// <summary>
+    /// Initializes state persistence for network resilience.
+    /// </summary>
+    private void InitializeStatePersistence(SetupOptions options)
+    {
+        _currentState = new TaskExecutionState
+        {
+            StartTime = DateTime.Now,
+            LastUpdateTime = DateTime.Now,
+            IsRunning = true,
+            IsComplete = false,
+            RunGroupPolicy = options.RunGroupPolicy,
+            RunSCCMActions = options.RunSCCMActions,
+            RunDellUpdates = options.RunDellUpdates,
+            RunImageChecks = options.RunImageChecks
+        };
+
+        // Save initial state
+        NetworkResilienceManager.SaveState(_currentState);
+
+        // Set up periodic state saving (every 5 seconds)
+        _stateSaveTimer = new System.Timers.Timer(5000);
+        _stateSaveTimer.Elapsed += (s, e) =>
+        {
+            if (_currentState != null)
+            {
+                _currentState.LastUpdateTime = DateTime.Now;
+                NetworkResilienceManager.SaveState(_currentState);
+            }
+        };
+        _stateSaveTimer.Start();
+    }
+
+    /// <summary>
+    /// Updates the persisted state during task execution.
+    /// </summary>
+    private void UpdatePersistedState(Action<TaskExecutionState> updateAction)
+    {
+        if (_currentState == null) return;
+
+        try
+        {
+            updateAction(_currentState);
+            _currentState.LastUpdateTime = DateTime.Now;
+            NetworkResilienceManager.SaveState(_currentState);
+        }
+        catch
+        {
+            // Ignore state save errors
+        }
+    }
+
+    /// <summary>
+    /// Finalizes state persistence when tasks complete.
+    /// </summary>
+    private void FinalizeStatePersistence()
+    {
+        try
+        {
+            _stateSaveTimer?.Stop();
+            _stateSaveTimer?.Dispose();
+            _stateSaveTimer = null;
+
+            if (_currentState != null)
+            {
+                _currentState.IsRunning = false;
+                _currentState.IsComplete = true;
+                _currentState.LastUpdateTime = DateTime.Now;
+                NetworkResilienceManager.SaveState(_currentState);
+            }
+
+            // Clear state after a short delay (allow any final saves)
+            Task.Delay(1000).ContinueWith(_ => NetworkResilienceManager.ClearState());
+        }
+        catch
+        {
+            // Ignore cleanup errors
+        }
+    }
+
+    #endregion
 
     private void Orchestrator_TaskProgressChanged(object? sender, TaskProgressEventArgs e)
     {
@@ -222,6 +401,29 @@ public partial class TasksView : Page
 
     private void Orchestrator_IndividualTaskProgress(object? sender, IndividualTaskProgressEventArgs e)
     {
+        // Update persisted state for task completion
+        if (e.Status == TaskStatus.Success || e.Status == TaskStatus.Warning)
+        {
+            UpdatePersistedState(state =>
+            {
+                switch (e.TaskId)
+                {
+                    case "group_policy":
+                        state.GroupPolicyComplete = true;
+                        break;
+                    case "sccm_actions":
+                        state.SCCMActionsComplete = true;
+                        break;
+                    case "dell_complete":
+                        state.DellUpdatesComplete = true;
+                        break;
+                    case "image_checks":
+                        state.ImageChecksComplete = true;
+                        break;
+                }
+            });
+        }
+
         try
         {
             Dispatcher.Invoke(() =>
@@ -310,17 +512,26 @@ public partial class TasksView : Page
                     // Show the Dell progress panel
                     DellProgressPanel.Visibility = Visibility.Visible;
 
-                    // Update phase
-                    TxtDellPhase.Text = e.Phase;
+                    // Update phase display
+                    TxtDellPhase.Text = e.Phase switch
+                    {
+                        "Initializing" => "Initializing Dell Command Update...",
+                        "Installing DCU" => "Installing Dell Command Update...",
+                        "Configuring" => "Configuring Dell Command Update...",
+                        "Scanning" => "Scanning for available updates...",
+                        "Scan Complete" => "Scan complete",
+                        "Applying Updates" => "Applying updates...",
+                        "Complete" => e.Message.Contains("RESTART") ? "Complete - Restart Required" : "Complete",
+                        "Error" => "Error occurred",
+                        _ => e.Phase
+                    };
 
                     // Update progress bar (only if percentage >= 0)
                     if (e.Percentage >= 0)
                     {
                         DellProgressBar.Value = e.Percentage;
+                        TxtDellOverallPercent.Text = $"{e.Percentage}%";
                     }
-
-                    // Update current activity
-                    TxtDellCurrentActivity.Text = e.Message;
 
                     // Parse updates count from message if available
                     if (e.Message.Contains("update(s)") || e.Message.Contains("Found"))
@@ -337,13 +548,11 @@ public partial class TasksView : Page
                             TxtDellUpdatesCount.Text = "Updates applied successfully";
                     }
 
-                    // Append to live log
-                    if (!string.IsNullOrEmpty(e.Message))
+                    // Append to live log (less verbose now since we have better UI)
+                    if (!string.IsNullOrEmpty(e.Message) && !e.Message.Contains("%"))
                     {
                         var timestamp = DateTime.Now.ToString("HH:mm:ss");
-                        TxtDellLiveLog.Text += $"[{timestamp}] [{e.Phase}] {e.Message}\n";
-
-                        // Auto-scroll to bottom
+                        TxtDellLiveLog.Text += $"[{timestamp}] {e.Message}\n";
                         DellLogScroller.ScrollToEnd();
                     }
 
@@ -358,6 +567,158 @@ public partial class TasksView : Page
             });
         }
         catch { /* Ignore dispatcher errors */ }
+    }
+
+    private void DellUpdateService_UpdateProgress(DellUpdateProgressInfo info)
+    {
+        // Update persisted state for Dell progress
+        UpdatePersistedState(state =>
+        {
+            state.CurrentDellPhase = info.Phase;
+            state.DellTotalUpdates = info.TotalUpdates;
+            state.DellCompletedUpdates = info.CompletedCount;
+
+            // Track completed update names
+            if (info.IsComplete && !string.IsNullOrEmpty(info.CurrentUpdateName))
+            {
+                if (!state.DellCompletedUpdateNames.Contains(info.CurrentUpdateName))
+                {
+                    state.DellCompletedUpdateNames.Add(info.CurrentUpdateName);
+                }
+            }
+
+            // Track log messages (keep last 50 for recovery)
+            if (!string.IsNullOrEmpty(info.Message) && !info.IsRawOutput)
+            {
+                state.LogMessages.Add($"[{DateTime.Now:HH:mm:ss}] {info.Message}");
+                if (state.LogMessages.Count > 50)
+                {
+                    state.LogMessages.RemoveAt(0);
+                }
+            }
+        });
+
+        try
+        {
+            Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    // Show the Dell progress panel
+                    DellProgressPanel.Visibility = Visibility.Visible;
+
+                    // Update overall progress
+                    if (info.TotalUpdates > 0)
+                    {
+                        var overallPercent = info.OverallPercentage;
+                        DellProgressBar.Value = overallPercent;
+                        TxtDellOverallPercent.Text = $"{overallPercent}%";
+                        TxtDellUpdatesCount.Text = $"{info.CompletedCount} of {info.TotalUpdates} update(s) complete";
+                    }
+
+                    // Update phase text
+                    TxtDellPhase.Text = info.Phase switch
+                    {
+                        "Starting" => $"Found {info.TotalUpdates} update(s) to apply",
+                        "Downloading" => $"Downloading update {info.CurrentUpdateIndex} of {info.TotalUpdates}",
+                        "Installing" => $"Installing update {info.CurrentUpdateIndex} of {info.TotalUpdates}",
+                        "Completed" => info.IsComplete ? $"Completed {info.CompletedCount} of {info.TotalUpdates}" : info.Message,
+                        "RebootRequired" => "Complete - Restart Required",
+                        _ => info.Phase
+                    };
+
+                    // Show/update current update panel for downloading/installing
+                    if (info.Phase == "Downloading" || info.Phase == "Installing")
+                    {
+                        CurrentUpdatePanel.Visibility = Visibility.Visible;
+                        TxtCurrentUpdateName.Text = info.CurrentUpdateName ?? "Unknown Update";
+
+                        // Update status badge
+                        if (info.Phase == "Downloading")
+                        {
+                            TxtCurrentUpdateStatus.Text = "Downloading";
+                            CurrentUpdateStatusBadge.Background = new SolidColorBrush(Color.FromRgb(225, 240, 250));
+                            TxtCurrentUpdateStatus.Foreground = new SolidColorBrush(Color.FromRgb(3, 101, 156));
+                        }
+                        else
+                        {
+                            TxtCurrentUpdateStatus.Text = "Installing";
+                            CurrentUpdateStatusBadge.Background = new SolidColorBrush(Color.FromRgb(255, 248, 225));
+                            TxtCurrentUpdateStatus.Foreground = new SolidColorBrush(Color.FromRgb(215, 165, 39));
+                        }
+
+                        // Update progress bars
+                        CurrentDownloadBar.Value = info.DownloadProgress;
+                        TxtCurrentDownloadPercent.Text = $"{info.DownloadProgress}%";
+
+                        CurrentInstallBar.Value = info.InstallProgress;
+                        TxtCurrentInstallPercent.Text = $"{info.InstallProgress}%";
+
+                        // If in install phase, ensure download shows 100%
+                        if (info.Phase == "Installing")
+                        {
+                            CurrentDownloadBar.Value = 100;
+                            TxtCurrentDownloadPercent.Text = "100%";
+                        }
+                    }
+
+                    // Handle completed update
+                    if (info.IsComplete && !string.IsNullOrEmpty(info.CurrentUpdateName))
+                    {
+                        // Add to completed list
+                        _completedUpdates.Add(new CompletedUpdateViewModel
+                        {
+                            Name = info.CurrentUpdateName,
+                            StatusText = "Installed"
+                        });
+                        CompletedUpdatesList.ItemsSource = _completedUpdates;
+
+                        // Hide current update panel briefly
+                        CurrentUpdatePanel.Visibility = Visibility.Collapsed;
+                    }
+
+                    // Append raw output to log
+                    if (info.IsRawOutput && !string.IsNullOrWhiteSpace(info.Message))
+                    {
+                        TxtDellLiveLog.Text += $"{info.Message}\n";
+                        DellLogScroller.ScrollToEnd();
+                    }
+                    else if (!info.IsRawOutput && !string.IsNullOrEmpty(info.Message))
+                    {
+                        // Also log non-raw important messages
+                        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+                        TxtDellLiveLog.Text += $"[{timestamp}] {info.Message}\n";
+                        DellLogScroller.ScrollToEnd();
+                    }
+
+                    // Update current activity for misc messages
+                    if (!string.IsNullOrEmpty(info.Message) && info.Phase != "Downloading" && info.Phase != "Installing")
+                    {
+                        TxtDellCurrentActivity.Text = info.Message;
+                    }
+                }
+                catch { /* Ignore UI update errors during network disruption */ }
+            });
+        }
+        catch { /* Ignore dispatcher errors */ }
+    }
+
+    private void ResetDellProgressPanel()
+    {
+        DellProgressPanel.Visibility = Visibility.Collapsed;
+        TxtDellPhase.Text = "Initializing...";
+        DellProgressBar.Value = 0;
+        TxtDellOverallPercent.Text = "0%";
+        TxtDellUpdatesCount.Text = "Checking for updates...";
+        TxtDellCurrentActivity.Text = "";
+        TxtDellLiveLog.Text = "";
+        CurrentUpdatePanel.Visibility = Visibility.Collapsed;
+        TxtCurrentUpdateName.Text = "";
+        CurrentDownloadBar.Value = 0;
+        CurrentInstallBar.Value = 0;
+        TxtCurrentDownloadPercent.Text = "0%";
+        TxtCurrentInstallPercent.Text = "0%";
+        _completedUpdates.Clear();
     }
 
     private void ResetSCCMActionStatuses()
@@ -441,68 +802,39 @@ public partial class TasksView : Page
         {
             SetStatus(StatusDell, TxtStatusDell, "Running", TaskStatus.Running);
 
-            // Show and reset Dell progress panel
+            // Reset and show Dell progress panel
+            ResetDellProgressPanel();
             DellProgressPanel.Visibility = Visibility.Visible;
-            TxtDellPhase.Text = "Initializing...";
-            DellProgressBar.Value = 0;
-            TxtDellUpdatesCount.Text = "Checking...";
-            TxtDellCurrentActivity.Text = "";
-            TxtDellLiveLog.Text = "";
 
             var result = await _dellUpdateService.RunCompleteUpdateAsync(
                 new Progress<string>(msg =>
                 {
-                    Dispatcher.Invoke(() =>
+                    try
                     {
-                        TxtProgressDetail.Text = msg;
-                        TxtDellCurrentActivity.Text = msg;
+                        Dispatcher.Invoke(() =>
+                        {
+                            try
+                            {
+                                TxtProgressDetail.Text = msg;
 
-                        // Update phase based on message content
-                        if (msg.Contains("Installing") || msg.Contains("Copying"))
-                        {
-                            TxtDellPhase.Text = "Installing DCU";
-                            DellProgressBar.Value = 15;
-                        }
-                        else if (msg.Contains("Configuring"))
-                        {
-                            TxtDellPhase.Text = "Configuring";
-                            DellProgressBar.Value = 25;
-                        }
-                        else if (msg.Contains("Scanning"))
-                        {
-                            TxtDellPhase.Text = "Scanning for Updates";
-                            DellProgressBar.Value = 35;
-                        }
-                        else if (msg.Contains("Found") || msg.Contains("update(s)"))
-                        {
-                            TxtDellPhase.Text = "Scan Complete";
-                            TxtDellUpdatesCount.Text = msg;
-                            DellProgressBar.Value = 45;
-                        }
-                        else if (msg.Contains("Applying") || msg.Contains("15-30"))
-                        {
-                            TxtDellPhase.Text = "Applying Updates";
-                            DellProgressBar.Value = 60;
-                        }
-                        else if (msg.Contains("RESTART"))
-                        {
-                            TxtDellPhase.Text = "Complete";
-                            TxtDellUpdatesCount.Text = "Updates applied - restart required";
-                            DellProgressBar.Value = 100;
-                        }
-
-                        // Append to live log
-                        var timestamp = DateTime.Now.ToString("HH:mm:ss");
-                        TxtDellLiveLog.Text += $"[{timestamp}] {msg}\n";
-                        DellLogScroller.ScrollToEnd();
-                    });
+                                // Append to live log
+                                var timestamp = DateTime.Now.ToString("HH:mm:ss");
+                                TxtDellLiveLog.Text += $"[{timestamp}] {msg}\n";
+                                DellLogScroller.ScrollToEnd();
+                            }
+                            catch { /* Ignore UI errors */ }
+                        });
+                    }
+                    catch { /* Ignore dispatcher errors */ }
                 }));
 
             UpdateTaskStatus(StatusDell, TxtStatusDell, TxtDurationDell, result);
 
             // Update final status
             TxtDellPhase.Text = result.Status == TaskStatus.Success ? "Complete" : "Error";
+            TxtDellOverallPercent.Text = "100%";
             DellProgressBar.Value = 100;
+
             if (!string.IsNullOrEmpty(result.DetailedOutput))
             {
                 TxtDellLiveLog.Text += "\n=== Detailed Log ===\n" + result.DetailedOutput;
@@ -592,4 +924,13 @@ public partial class TasksView : Page
             statusText.Foreground = new SolidColorBrush(foreground);
         });
     }
+}
+
+/// <summary>
+/// View model for completed Dell updates display.
+/// </summary>
+public class CompletedUpdateViewModel
+{
+    public string Name { get; set; } = string.Empty;
+    public string StatusText { get; set; } = "Installed";
 }

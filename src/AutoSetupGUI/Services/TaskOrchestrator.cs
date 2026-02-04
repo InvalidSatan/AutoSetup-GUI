@@ -423,11 +423,43 @@ public class DellProgressEventArgs : EventArgs
     public int Percentage { get; }
     public string? LogOutput { get; }
 
+    // Per-update tracking
+    public string? CurrentUpdateName { get; }
+    public int? CurrentUpdateIndex { get; }
+    public int? TotalUpdates { get; }
+    public int? DownloadProgress { get; }
+    public int? InstallProgress { get; }
+    public bool IsUpdateComplete { get; }
+
     public DellProgressEventArgs(string phase, string message, int percentage, string? logOutput = null)
     {
         Phase = phase;
         Message = message;
         Percentage = percentage;
+        LogOutput = logOutput;
+    }
+
+    public DellProgressEventArgs(
+        string phase,
+        string message,
+        int percentage,
+        string? currentUpdateName,
+        int? currentUpdateIndex,
+        int? totalUpdates,
+        int? downloadProgress,
+        int? installProgress,
+        bool isUpdateComplete = false,
+        string? logOutput = null)
+    {
+        Phase = phase;
+        Message = message;
+        Percentage = percentage;
+        CurrentUpdateName = currentUpdateName;
+        CurrentUpdateIndex = currentUpdateIndex;
+        TotalUpdates = totalUpdates;
+        DownloadProgress = downloadProgress;
+        InstallProgress = installProgress;
+        IsUpdateComplete = isUpdateComplete;
         LogOutput = logOutput;
     }
 }
