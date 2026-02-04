@@ -1,4 +1,4 @@
-# University Auto Setup v2.0
+# University Auto Setup v2.1
 
 A professional-grade Windows machine setup application for Appalachian State University IT department. This WPF application streamlines post-imaging configuration by automating Group Policy updates, SCCM client actions, Dell driver updates, and image verification checks.
 
@@ -71,7 +71,7 @@ A professional-grade Windows machine setup application for Appalachian State Uni
 ### Network Share Deployment (Recommended)
 1. Copy the published application to a network share:
    ```
-   \\server\share\UniversityAutoSetup\v2.0\
+   \\server\share\UniversityAutoSetup\v2.1\
    ├── AutoSetup-GUI.exe
    ├── AutoSetup-GUI.bat
    ├── appsettings.json
@@ -117,7 +117,7 @@ Configuration is managed via `appsettings.json`:
 ```json
 {
   "Application": {
-    "Version": "2.0.0",
+    "Version": "2.1.0",
     "Name": "University Auto Setup"
   },
   "Logging": {
@@ -302,7 +302,11 @@ src/AutoSetupGUI/bin/Release/net8.0-windows/win-x64/publish/
 
 ## Version History
 
-### v2.0.0 (Current)
+### v2.1.0 (Current)
+- Dark mode theme support
+- Settings tab styling fixes
+
+### v2.0.0
 - Complete rewrite from PowerShell/Windows Forms to C# WPF
 - Modern card-based UI with App State branding
 - Real-time individual task status updates

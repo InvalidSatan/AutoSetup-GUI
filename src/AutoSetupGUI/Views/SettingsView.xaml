@@ -27,14 +27,14 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtVersion" Text="2.0.0" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtVersion" Text="2.1.0" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Organization:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Appalachian State University" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Organization:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Appalachian State University" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Contact:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtContact" Text="Alex Guill (guillra@appstate.edu)"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Contact:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtContact" Text="Alex Guill (guillra@appstate.edu)" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -53,13 +53,13 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Local Path:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Local Path:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtLocalPath" Text="C:\Temp\UniversityAutoSetup\Logs"
-                                   TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                   TextWrapping="Wrap" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Network Path:" FontWeight="SemiBold"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Network Path:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtNetworkPath" Text="P:\UniversityAutoSetup\Logs"
-                                   TextWrapping="Wrap"/>
+                                   TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -79,15 +79,15 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Installer Path:" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Installer Path:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtDCUPath" Text="\\server\share\Dell\DCU\DCU_Setup.exe"
-                                   TextWrapping="Wrap" Margin="0,0,0,8"/>
+                                   TextWrapping="Wrap" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Max Retries:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtMaxRetries" Text="3" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Max Retries:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtMaxRetries" Text="3" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Retry Delay:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtRetryDelay" Text="10 seconds"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Retry Delay:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtRetryDelay" Text="10 seconds" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -106,11 +106,11 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Action Timeout:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtActionTimeout" Text="120 seconds" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Action Timeout:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtActionTimeout" Text="120 seconds" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Repair on Failure:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtRepairOnFailure" Text="Yes"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Repair on Failure:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtRepairOnFailure" Text="Yes" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -129,11 +129,11 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Min Disk Space:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtMinDiskSpace" Text="20 GB" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Min Disk Space:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtMinDiskSpace" Text="20 GB" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="BitLocker Required:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtBitLockerRequired" Text="Yes"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="BitLocker Required:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtBitLockerRequired" Text="Yes" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
@@ -155,20 +155,20 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="F5" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Refresh data" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="F5" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="Refresh data" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Ctrl+A" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Run all selected tasks" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Ctrl+A" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="Run all selected tasks" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Ctrl+C" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Copy system info to clipboard" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Ctrl+C" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Copy system info to clipboard" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Ctrl+S" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock Grid.Row="3" Grid.Column="1" Text="Export/save logs" Margin="0,0,0,8"/>
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Ctrl+S" FontFamily="Consolas" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="Export/save logs" Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Ctrl+Q" FontFamily="Consolas" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="4" Grid.Column="1" Text="Quit application"/>
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Ctrl+Q" FontFamily="Consolas" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="Quit application" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>

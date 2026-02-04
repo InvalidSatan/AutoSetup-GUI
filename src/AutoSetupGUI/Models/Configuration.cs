@@ -17,7 +17,7 @@ public class AppConfiguration
 
 public class ApplicationSettings
 {
-    public string Version { get; set; } = "2.0.0";
+    public string Version { get; set; } = "2.1.0";
     public string Name { get; set; } = "University Auto Setup";
     public string Organization { get; set; } = "Appalachian State University";
 }
