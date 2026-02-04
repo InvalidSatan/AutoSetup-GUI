@@ -288,6 +288,7 @@ public static class NetworkResilienceManager
 
             // Create a batch script that waits for this process to exit, then deletes the folder
             var cleanupScriptPath = Path.Combine(Path.GetTempPath(), $"autosetup_cleanup_{Guid.NewGuid():N}.cmd");
+            var cleanupLogPath = Path.Combine(Path.GetTempPath(), "autosetup_cleanup.log");
 
             // Get current process ID to wait for
             var currentPid = Process.GetCurrentProcess().Id;
@@ -296,33 +297,64 @@ public static class NetworkResilienceManager
             // 1. Waits a few seconds for the app to fully exit
             // 2. Attempts to delete the app folder (with retries in case files are still locked)
             // 3. Deletes the parent UniversityAutoSetup folder if empty
-            // 4. Deletes itself
+            // 4. Logs results for debugging
+            // 5. Deletes itself
             var script = $@"@echo off
+:: Cleanup script for University Auto Setup
+:: Log file: {cleanupLogPath}
+
+echo [%date% %time%] Cleanup script started >> ""{cleanupLogPath}""
+echo [%date% %time%] Target folder: {LocalAppFolder} >> ""{cleanupLogPath}""
+echo [%date% %time%] Waiting for PID {currentPid} to exit... >> ""{cleanupLogPath}""
+
 :: Wait for the application to fully exit
 ping localhost -n 5 > nul
 
-:: Wait for process to exit (with timeout)
+:: Wait for process to exit (with timeout of ~60 seconds)
+set maxwait=30
 :waitloop
+if %maxwait%==0 (
+    echo [%date% %time%] Timeout waiting for process to exit >> ""{cleanupLogPath}""
+    goto trydelete
+)
 tasklist /FI ""PID eq {currentPid}"" 2>nul | find ""{currentPid}"" >nul
 if %errorlevel%==0 (
+    set /a maxwait=%maxwait%-1
     ping localhost -n 2 > nul
     goto waitloop
 )
 
+echo [%date% %time%] Process exited, starting cleanup >> ""{cleanupLogPath}""
+
+:trydelete
 :: Try to delete the app folder (with retries)
 set retries=10
 :deleteloop
-if %retries%==0 goto cleanup
-rd /s /q ""{LocalAppFolder}"" 2>nul
+if %retries%==0 (
+    echo [%date% %time%] Failed to delete after 10 retries >> ""{cleanupLogPath}""
+    goto cleanup
+)
+echo [%date% %time%] Delete attempt, retries remaining: %retries% >> ""{cleanupLogPath}""
+rd /s /q ""{LocalAppFolder}"" 2>>""{cleanupLogPath}""
 if exist ""{LocalAppFolder}"" (
+    echo [%date% %time%] Folder still exists, retrying... >> ""{cleanupLogPath}""
     set /a retries=%retries%-1
     ping localhost -n 3 > nul
     goto deleteloop
 )
 
+echo [%date% %time%] Successfully deleted app folder >> ""{cleanupLogPath}""
+
 :cleanup
 :: Try to delete parent folder if empty
 rd ""{Path.GetDirectoryName(LocalAppFolder)}"" 2>nul
+if not exist ""{Path.GetDirectoryName(LocalAppFolder)}"" (
+    echo [%date% %time%] Successfully deleted parent folder >> ""{cleanupLogPath}""
+) else (
+    echo [%date% %time%] Parent folder not deleted (may not be empty) >> ""{cleanupLogPath}""
+)
+
+echo [%date% %time%] Cleanup script finished >> ""{cleanupLogPath}""
 
 :: Delete this script
 del ""%~f0""
@@ -343,6 +375,7 @@ del ""%~f0""
             Process.Start(startInfo);
 
             Debug.WriteLine($"Scheduled cleanup script: {cleanupScriptPath}");
+            Debug.WriteLine($"Cleanup log will be at: {cleanupLogPath}");
         }
         catch (Exception ex)
         {

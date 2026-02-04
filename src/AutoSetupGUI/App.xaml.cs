@@ -287,18 +287,29 @@ public partial class App : Application
         Log.Information("University Auto Setup v2.0 shutting down...");
 
         // Clean up local copy if running from one and tasks are complete
-        if (NetworkResilienceManager.IsRunningFromLocalCopy())
+        var isLocalCopy = NetworkResilienceManager.IsRunningFromLocalCopy();
+        var hasActiveState = NetworkResilienceManager.HasActiveState();
+
+        Log.Information("Exit check - IsRunningFromLocalCopy: {IsLocal}, HasActiveState: {HasState}",
+            isLocalCopy, hasActiveState);
+
+        if (isLocalCopy)
         {
             // Only clean up if there's no active/incomplete state (tasks finished)
-            if (!NetworkResilienceManager.HasActiveState())
+            if (!hasActiveState)
             {
                 Log.Information("Scheduling cleanup of local copy at: {Path}", NetworkResilienceManager.LocalAppPath);
+                Log.Information("Cleanup log will be at: {Path}", Path.Combine(Path.GetTempPath(), "autosetup_cleanup.log"));
                 NetworkResilienceManager.ScheduleSelfCleanup();
             }
             else
             {
-                Log.Information("Skipping cleanup - tasks may still be running in background");
+                Log.Information("Skipping cleanup - HasActiveState returned true (tasks may still be running)");
             }
+        }
+        else
+        {
+            Log.Information("Not running from local copy - no cleanup needed");
         }
 
         Log.CloseAndFlush();
