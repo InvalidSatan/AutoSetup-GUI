@@ -294,13 +294,19 @@ public class TaskOrchestrator
         {
             TaskProgressChanged?.Invoke(this, new TaskProgressEventArgs(message, percentage));
         }
-        catch { /* Ignore event handler errors */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Event handler error in TaskProgressChanged (non-fatal)");
+        }
 
         try
         {
             _loggingService.LogInfo(message);
         }
-        catch { /* Ignore logging errors during network disruption */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Logging error during ReportProgress (non-fatal, possibly network disruption)");
+        }
     }
 
     private void ReportStatus(string status)
@@ -309,7 +315,10 @@ public class TaskOrchestrator
         {
             StatusChanged?.Invoke(this, status);
         }
-        catch { /* Ignore event handler errors */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Event handler error in StatusChanged (non-fatal)");
+        }
     }
 
     private void ReportIndividualTaskProgress(string taskId, string taskName, TaskStatus status, string? message = null, TimeSpan? duration = null)
@@ -318,7 +327,10 @@ public class TaskOrchestrator
         {
             IndividualTaskProgress?.Invoke(this, new IndividualTaskProgressEventArgs(taskId, taskName, status, message, duration));
         }
-        catch { /* Ignore event handler errors */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Event handler error in IndividualTaskProgress (non-fatal)");
+        }
     }
 
     private void ReportDellProgress(string phase, string message, int percentage, string? logOutput = null)
@@ -327,7 +339,10 @@ public class TaskOrchestrator
         {
             DellProgress?.Invoke(this, new DellProgressEventArgs(phase, message, percentage, logOutput));
         }
-        catch { /* Ignore event handler errors */ }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Event handler error in DellProgress (non-fatal)");
+        }
     }
 
     private void LogTaskResult(TaskResult result)

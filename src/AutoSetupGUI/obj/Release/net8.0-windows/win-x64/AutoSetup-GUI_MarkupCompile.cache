@@ -1,0 +1,20 @@
+﻿AutoSetup-GUI
+
+
+winexe
+C#
+.cs
+C:\Users\guillra\Documents\Auto Setup - GUI Version\AutoSetup-GUI\src\AutoSetupGUI\obj\Release\net8.0-windows\win-x64\
+AutoSetupGUI
+none
+false
+TRACE;RELEASE;NET;NET8_0;NETCOREAPP
+C:\Users\guillra\Documents\Auto Setup - GUI Version\AutoSetup-GUI\src\AutoSetupGUI\App.xaml
+10281959014
+
+481157399264
+265-204299796
+Themes\AppStateColors.xaml;Themes\LightTheme.xaml;Themes\SharedStyles.xaml;Views\DashboardView.xaml;Views\LogViewerView.xaml;Views\MainWindow.xaml;Views\PdfViewerWindow.xaml;Views\SettingsView.xaml;Views\SystemInfoView.xaml;Views\TasksView.xaml;
+
+False
+

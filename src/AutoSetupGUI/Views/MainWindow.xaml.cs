@@ -51,36 +51,44 @@ public partial class MainWindow : Window
         var computerName = _systemInfoService.GetComputerName();
         await _loggingService.InitializeAsync(serviceTag, computerName);
 
-        // Check network status
-        UpdateNetworkStatus();
+        // Check network status (async to avoid UI freeze)
+        await UpdateNetworkStatusAsync();
 
         // Navigate to dashboard (use cached instance)
         _dashboardView = new DashboardView();
         ContentFrame.Navigate(_dashboardView);
     }
 
-    private void UpdateNetworkStatus()
+    private async Task UpdateNetworkStatusAsync()
     {
-        // Check internet connectivity
-        try
-        {
-            using var ping = new System.Net.NetworkInformation.Ping();
-            var reply = ping.Send("8.8.8.8", 2000);
-            var connected = reply.Status == System.Net.NetworkInformation.IPStatus.Success;
+        // Show checking state immediately
+        NetworkIndicator.Fill = new SolidColorBrush(Color.FromRgb(128, 128, 128));
+        NetworkStatus.Text = "Network: Checking...";
+        PDriveIndicator.Fill = new SolidColorBrush(Color.FromRgb(128, 128, 128));
+        PDriveStatus.Text = "P:\\ Drive: Checking...";
 
-            NetworkIndicator.Fill = connected
-                ? new SolidColorBrush(Color.FromRgb(16, 124, 16))
-                : new SolidColorBrush(Color.FromRgb(209, 52, 56));
-            NetworkStatus.Text = connected ? "Network: Connected" : "Network: Disconnected";
-        }
-        catch
+        // Run checks on background thread
+        var (internetConnected, pDriveAvailable) = await Task.Run(() =>
         {
-            NetworkIndicator.Fill = new SolidColorBrush(Color.FromRgb(209, 52, 56));
-            NetworkStatus.Text = "Network: Error";
-        }
+            bool internet = false;
+            try
+            {
+                using var ping = new System.Net.NetworkInformation.Ping();
+                var reply = ping.Send("8.8.8.8", 2000);
+                internet = reply.Status == System.Net.NetworkInformation.IPStatus.Success;
+            }
+            catch { /* Network error */ }
 
-        // Check P:\ drive
-        var pDriveAvailable = System.IO.Directory.Exists(@"P:\");
+            bool pDrive = System.IO.Directory.Exists(@"P:\");
+            return (internet, pDrive);
+        });
+
+        // Update UI with results
+        NetworkIndicator.Fill = internetConnected
+            ? new SolidColorBrush(Color.FromRgb(16, 124, 16))
+            : new SolidColorBrush(Color.FromRgb(209, 52, 56));
+        NetworkStatus.Text = internetConnected ? "Network: Connected" : "Network: Disconnected";
+
         PDriveIndicator.Fill = pDriveAvailable
             ? new SolidColorBrush(Color.FromRgb(16, 124, 16))
             : new SolidColorBrush(Color.FromRgb(255, 140, 0));
@@ -182,9 +190,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private void BtnRefresh_Click(object sender, RoutedEventArgs e)
+    private async void BtnRefresh_Click(object sender, RoutedEventArgs e)
     {
-        UpdateNetworkStatus();
+        await UpdateNetworkStatusAsync();
 
         // Refresh current view
         if (ContentFrame.Content is DashboardView dashboardView)

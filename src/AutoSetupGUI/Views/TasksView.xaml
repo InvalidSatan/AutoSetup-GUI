@@ -18,6 +18,8 @@
         <!-- Page Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,20">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                <Button x:Name="BtnCancel" Content="Cancel" Style="{StaticResource SecondaryButtonStyle}"
+                        Click="BtnCancel_Click" Visibility="Collapsed" Margin="0,0,8,0"/>
                 <Button x:Name="BtnRunAll" Content="Run All Selected" Style="{StaticResource PrimaryButtonStyle}"
                         Click="BtnRunAll_Click"/>
             </StackPanel>

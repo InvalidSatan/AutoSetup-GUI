@@ -227,7 +227,7 @@ public class ProcessRunner
                 {
                     outputBuilder.AppendLine(e.Data);
                     try { onOutputLine?.Invoke(e.Data); }
-                    catch { /* Ignore callback errors */ }
+                    catch (Exception ex) { _logger.LogDebug(ex, "Output callback error (non-fatal)"); }
                 }
             };
 
@@ -237,7 +237,7 @@ public class ProcessRunner
                 {
                     errorBuilder.AppendLine(e.Data);
                     try { onErrorLine?.Invoke(e.Data); }
-                    catch { /* Ignore callback errors */ }
+                    catch (Exception ex) { _logger.LogDebug(ex, "Error callback error (non-fatal)"); }
                 }
             };
 

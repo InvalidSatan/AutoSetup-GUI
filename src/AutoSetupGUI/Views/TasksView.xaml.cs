@@ -30,6 +30,9 @@ public partial class TasksView : Page
     private bool _isRunning;
     private bool _isInitialized;
 
+    // Cancellation support
+    private CancellationTokenSource? _cancellationTokenSource;
+
     // State persistence for network resilience
     private TaskExecutionState? _currentState;
     private System.Timers.Timer? _stateSaveTimer;
@@ -184,7 +187,9 @@ public partial class TasksView : Page
             return;
 
         _isRunning = true;
+        _cancellationTokenSource = new CancellationTokenSource();
         SetButtonsEnabled(false);
+        BtnCancel.Visibility = Visibility.Visible;
         ProgressSection.Visibility = Visibility.Visible;
         ProgressBar.Value = 0;
 
@@ -227,7 +232,7 @@ public partial class TasksView : Page
 
         try
         {
-            var results = await _orchestrator.RunAllTasksAsync(options);
+            var results = await _orchestrator.RunAllTasksAsync(options, _cancellationTokenSource.Token);
 
             // Update UI with results
             UpdateTaskStatus(StatusGP, TxtStatusGP, TxtDurationGP,
@@ -265,6 +270,11 @@ public partial class TasksView : Page
                 ShowRestartNotification();
             }
         }
+        catch (OperationCanceledException)
+        {
+            TxtFinalStatus.Text = "Tasks cancelled by user.";
+            TxtProgressStatus.Text = "Cancelled";
+        }
         catch (Exception ex)
         {
             TxtFinalStatus.Text = $"Error: {ex.Message}";
@@ -274,11 +284,32 @@ public partial class TasksView : Page
         finally
         {
             _isRunning = false;
+            _cancellationTokenSource?.Dispose();
+            _cancellationTokenSource = null;
+            ResetCancelButton();
             SetButtonsEnabled(true);
 
             // Clean up state persistence - tasks completed (successfully or with error)
             FinalizeStatePersistence();
         }
+    }
+
+    private void BtnCancel_Click(object sender, RoutedEventArgs e)
+    {
+        if (_cancellationTokenSource != null && !_cancellationTokenSource.IsCancellationRequested)
+        {
+            _cancellationTokenSource.Cancel();
+            BtnCancel.IsEnabled = false;
+            BtnCancel.Content = "Cancelling...";
+            TxtProgressStatus.Text = "Cancelling... Please wait.";
+        }
+    }
+
+    private void ResetCancelButton()
+    {
+        BtnCancel.IsEnabled = true;
+        BtnCancel.Content = "Cancel";
+        BtnCancel.Visibility = Visibility.Collapsed;
     }
 
     #region State Persistence for Network Resilience
@@ -370,10 +401,10 @@ public partial class TasksView : Page
                     ProgressBar.Value = e.Percentage;
                     TxtProgressStatus.Text = e.Message;
                 }
-                catch { /* Ignore UI update errors */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI update error: {ex.Message}"); }
             });
         }
-        catch { /* Ignore dispatcher errors */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error in TaskProgressChanged: {ex.Message}"); }
     }
 
     private void Orchestrator_StatusChanged(object? sender, string e)
@@ -386,10 +417,10 @@ public partial class TasksView : Page
                 {
                     TxtProgressDetail.Text = e;
                 }
-                catch { /* Ignore UI update errors */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI update error: {ex.Message}"); }
             });
         }
-        catch { /* Ignore dispatcher errors */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error in StatusChanged: {ex.Message}"); }
     }
 
     private void Orchestrator_IndividualTaskProgress(object? sender, IndividualTaskProgressEventArgs e)
@@ -457,10 +488,10 @@ public partial class TasksView : Page
                             break;
                     }
                 }
-                catch { /* Ignore UI update errors */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI update error: {ex.Message}"); }
             });
         }
-        catch { /* Ignore dispatcher errors */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error in IndividualTaskProgress: {ex.Message}"); }
     }
 
     private static string FormatDuration(TimeSpan duration)
@@ -487,10 +518,10 @@ public partial class TasksView : Page
                         viewModel.UpdateFromResult(e);
                     }
                 }
-                catch { /* Ignore UI update errors */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI update error: {ex.Message}"); }
             });
         }
-        catch { /* Ignore dispatcher errors */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error in SCCMActionProgress: {ex.Message}"); }
     }
 
     private void Orchestrator_DellProgress(object? sender, DellProgressEventArgs e)
@@ -556,10 +587,10 @@ public partial class TasksView : Page
                         DellLogScroller.ScrollToEnd();
                     }
                 }
-                catch { /* Ignore UI update errors during network disruption */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI update error in DellProgress: {ex.Message}"); }
             });
         }
-        catch { /* Ignore dispatcher errors */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error in DellProgress: {ex.Message}"); }
     }
 
     private void DellUpdateService_UpdateProgress(DellUpdateProgressInfo info)
@@ -690,10 +721,10 @@ public partial class TasksView : Page
                         TxtDellCurrentActivity.Text = info.Message;
                     }
                 }
-                catch { /* Ignore UI update errors during network disruption */ }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI update error in DellUpdateProgress: {ex.Message}"); }
             });
         }
-        catch { /* Ignore dispatcher errors */ }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error in DellUpdateProgress: {ex.Message}"); }
     }
 
     private void ResetDellProgressPanel()
@@ -815,10 +846,10 @@ public partial class TasksView : Page
                                 TxtDellLiveLog.Text += $"[{timestamp}] {msg}\n";
                                 DellLogScroller.ScrollToEnd();
                             }
-                            catch { /* Ignore UI errors */ }
+                            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"UI error: {ex.Message}"); }
                         });
                     }
-                    catch { /* Ignore dispatcher errors */ }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Dispatcher error: {ex.Message}"); }
                 }));
 
             UpdateTaskStatus(StatusDell, TxtStatusDell, TxtDurationDell, result);
