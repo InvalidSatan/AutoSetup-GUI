@@ -25,6 +25,7 @@ public class TaskOrchestrator
 
     public event EventHandler<TaskProgressEventArgs>? TaskProgressChanged;
     public event EventHandler<string>? StatusChanged;
+    public event EventHandler<IndividualTaskProgressEventArgs>? IndividualTaskProgress;
 
     public TaskOrchestrator(
         ILogger<TaskOrchestrator> logger,
@@ -85,12 +86,19 @@ public class TaskOrchestrator
                 ReportProgress("Updating Group Policy...", 10);
                 _loggingService.LogSection("Group Policy Update");
 
+                // Signal task started
+                ReportIndividualTaskProgress("group_policy", "Group Policy Update", TaskStatus.Running);
+
                 var gpResult = await _groupPolicyService.UpdateGroupPolicyAsync(
                     new Progress<string>(msg => ReportStatus(msg)),
                     cancellationToken);
 
                 results.TaskResults.Add(gpResult);
                 LogTaskResult(gpResult);
+
+                // Signal task completed
+                ReportIndividualTaskProgress("group_policy", "Group Policy Update", gpResult.Status, gpResult.Message, gpResult.Duration);
+
                 ReportProgress("Group Policy update completed", 25);
             }
 
@@ -99,6 +107,9 @@ public class TaskOrchestrator
             {
                 ReportProgress("Running SCCM client actions...", 30);
                 _loggingService.LogSection("SCCM Client Actions");
+
+                // Signal task started
+                ReportIndividualTaskProgress("sccm_actions", "SCCM Client Actions", TaskStatus.Running);
 
                 var sccmResults = await _sccmService.RunAllActionsAsync(
                     new Progress<SCCMActionResult>(r =>
@@ -128,6 +139,10 @@ public class TaskOrchestrator
 
                 results.TaskResults.Add(sccmTaskResult);
                 LogTaskResult(sccmTaskResult);
+
+                // Signal task completed
+                ReportIndividualTaskProgress("sccm_actions", "SCCM Client Actions", sccmTaskResult.Status, sccmTaskResult.Message, sccmTaskResult.Duration);
+
                 ReportProgress("SCCM actions completed", 50);
             }
 
@@ -137,6 +152,9 @@ public class TaskOrchestrator
                 ReportProgress("Checking Dell updates...", 55);
                 _loggingService.LogSection("Dell Command Update");
 
+                // Signal task started
+                ReportIndividualTaskProgress("dell_complete", "Dell Command Update", TaskStatus.Running);
+
                 var dellResult = await _dellUpdateService.RunCompleteUpdateAsync(
                     new Progress<string>(msg => ReportStatus(msg)),
                     cancellationToken);
@@ -144,6 +162,10 @@ public class TaskOrchestrator
                 results.TaskResults.Add(dellResult);
                 results.RequiresRestart |= dellResult.RequiresRestart;
                 LogTaskResult(dellResult);
+
+                // Signal task completed
+                ReportIndividualTaskProgress("dell_complete", "Dell Command Update", dellResult.Status, dellResult.Message, dellResult.Duration);
+
                 ReportProgress("Dell updates completed", 85);
             }
 
@@ -153,6 +175,9 @@ public class TaskOrchestrator
                 ReportProgress("Running image verification checks...", 90);
                 _loggingService.LogSection("Image Verification Checks");
 
+                // Signal task started
+                ReportIndividualTaskProgress("image_checks", "Image Verification", TaskStatus.Running);
+
                 results.ImageChecks = await _imageCheckService.RunAllChecksAsync(
                     new Progress<ImageCheck>(check =>
                     {
@@ -160,6 +185,13 @@ public class TaskOrchestrator
                             check.Passed ? LogLevel.Success : LogLevel.Warning);
                     }),
                     cancellationToken);
+
+                // Signal task completed
+                var checkStatus = results.ImageChecks.AllPassed ? TaskStatus.Success :
+                                  results.ImageChecks.PassedCount > 0 ? TaskStatus.Warning : TaskStatus.Error;
+                ReportIndividualTaskProgress("image_checks", "Image Verification",
+                    checkStatus,
+                    $"{results.ImageChecks.PassedCount}/{results.ImageChecks.TotalCount} passed");
             }
 
             // Generate PDF report (faster to open than HTML)
@@ -235,6 +267,11 @@ public class TaskOrchestrator
         StatusChanged?.Invoke(this, status);
     }
 
+    private void ReportIndividualTaskProgress(string taskId, string taskName, TaskStatus status, string? message = null, TimeSpan? duration = null)
+    {
+        IndividualTaskProgress?.Invoke(this, new IndividualTaskProgressEventArgs(taskId, taskName, status, message, duration));
+    }
+
     private void LogTaskResult(TaskResult result)
     {
         var level = result.Status switch
@@ -289,5 +326,31 @@ public class TaskProgressEventArgs : EventArgs
     {
         Message = message;
         Percentage = percentage;
+    }
+}
+
+/// <summary>
+/// Event arguments for individual task progress updates.
+/// </summary>
+public class IndividualTaskProgressEventArgs : EventArgs
+{
+    public string TaskId { get; }
+    public string TaskName { get; }
+    public TaskStatus Status { get; }
+    public string? Message { get; }
+    public TimeSpan? Duration { get; }
+
+    public IndividualTaskProgressEventArgs(
+        string taskId,
+        string taskName,
+        TaskStatus status,
+        string? message = null,
+        TimeSpan? duration = null)
+    {
+        TaskId = taskId;
+        TaskName = taskName;
+        Status = status;
+        Message = message;
+        Duration = duration;
     }
 }

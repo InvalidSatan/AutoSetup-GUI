@@ -37,6 +37,7 @@ public partial class TasksView : Page
 
         _orchestrator.TaskProgressChanged += Orchestrator_TaskProgressChanged;
         _orchestrator.StatusChanged += Orchestrator_StatusChanged;
+        _orchestrator.IndividualTaskProgress += Orchestrator_IndividualTaskProgress;
 
         Loaded += TasksView_Loaded;
     }
@@ -83,6 +84,25 @@ public partial class TasksView : Page
             RunDellUpdates = ChkDell.IsChecked == true && _dellUpdateService.IsDellSystem(),
             RunImageChecks = ChkImageChecks.IsChecked == true
         };
+
+        // Reset all task statuses to pending before starting
+        if (options.RunGroupPolicy)
+            SetStatus(StatusGP, TxtStatusGP, "Pending", TaskStatus.Pending);
+        if (options.RunSCCMActions)
+            SetStatus(StatusSCCM, TxtStatusSCCM, "Pending", TaskStatus.Pending);
+        if (options.RunDellUpdates)
+            SetStatus(StatusDell, TxtStatusDell, "Pending", TaskStatus.Pending);
+        if (options.RunImageChecks)
+            SetStatus(StatusChecks, TxtStatusChecks, "Pending", TaskStatus.Pending);
+
+        // Clear duration texts
+        TxtDurationGP.Text = "";
+        TxtDurationSCCM.Text = "";
+        TxtDurationDell.Text = "";
+
+        // Reset final status text
+        TxtFinalStatus.Text = "";
+        BtnViewReport.Visibility = Visibility.Collapsed;
 
         try
         {
@@ -160,6 +180,53 @@ public partial class TasksView : Page
         {
             TxtProgressDetail.Text = e;
         });
+    }
+
+    private void Orchestrator_IndividualTaskProgress(object? sender, IndividualTaskProgressEventArgs e)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            // Map task ID to UI elements and update status
+            switch (e.TaskId)
+            {
+                case "group_policy":
+                    SetStatus(StatusGP, TxtStatusGP,
+                        e.Status == TaskStatus.Running ? "Running..." : e.Status.ToString(),
+                        e.Status);
+                    if (e.Duration.HasValue)
+                        TxtDurationGP.Text = $"({FormatDuration(e.Duration.Value)})";
+                    break;
+
+                case "sccm_actions":
+                    SetStatus(StatusSCCM, TxtStatusSCCM,
+                        e.Status == TaskStatus.Running ? "Running..." : (e.Message ?? e.Status.ToString()),
+                        e.Status);
+                    if (e.Duration.HasValue)
+                        TxtDurationSCCM.Text = $"({FormatDuration(e.Duration.Value)})";
+                    break;
+
+                case "dell_complete":
+                    SetStatus(StatusDell, TxtStatusDell,
+                        e.Status == TaskStatus.Running ? "Running..." : e.Status.ToString(),
+                        e.Status);
+                    if (e.Duration.HasValue)
+                        TxtDurationDell.Text = $"({FormatDuration(e.Duration.Value)})";
+                    break;
+
+                case "image_checks":
+                    SetStatus(StatusChecks, TxtStatusChecks,
+                        e.Status == TaskStatus.Running ? "Running..." : (e.Message ?? e.Status.ToString()),
+                        e.Status);
+                    break;
+            }
+        });
+    }
+
+    private static string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalMinutes >= 1)
+            return $"{duration.TotalMinutes:F1}m";
+        return $"{duration.TotalSeconds:F1}s";
     }
 
     private async void BtnRunGP_Click(object sender, RoutedEventArgs e)
