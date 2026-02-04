@@ -257,7 +257,7 @@
 
                         <StackPanel Grid.Column="1">
                             <TextBlock Text="Image Verification Checks" FontWeight="SemiBold" FontSize="16"/>
-                            <TextBlock Text="Verify Windows activation, domain, SCCM, disk space, network, and BitLocker"
+                            <TextBlock Text="Verify domain membership, SCCM client, disk space, network connectivity, and pending reboots"
                                        Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                 <Border x:Name="StatusChecks" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">

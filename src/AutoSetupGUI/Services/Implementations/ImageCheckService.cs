@@ -48,13 +48,11 @@ public class ImageCheckService : IImageCheckService
 
         var checks = new List<Func<CancellationToken, Task<ImageCheck>>>
         {
-            CheckWindowsActivationAsync,
             CheckDomainJoinAsync,
             CheckSCCMClientAsync,
             CheckDiskSpaceAsync,
             CheckNetworkAsync,
-            CheckPendingRebootAsync,
-            CheckBitLockerAsync
+            CheckPendingRebootAsync
         };
 
         foreach (var checkFunc in checks)
