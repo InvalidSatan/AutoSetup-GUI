@@ -330,6 +330,32 @@ echo [%date% %time%] Process exited, waiting for file handles to release... >> "
 ping localhost -n 10 > nul
 
 :trydelete
+:: First, log what processes have handles to files in this folder
+echo [%date% %time%] Checking for processes with handles to folder... >> ""{cleanupLogPath}""
+echo [%date% %time%] Files in folder: >> ""{cleanupLogPath}""
+dir /b ""{LocalAppFolder}"" >> ""{cleanupLogPath}"" 2>&1
+
+:: Use handle.exe if available, otherwise try openfiles
+where handle >nul 2>&1
+if %errorlevel%==0 (
+    echo [%date% %time%] Running handle.exe to find locks: >> ""{cleanupLogPath}""
+    handle ""{LocalAppFolder}"" >> ""{cleanupLogPath}"" 2>&1
+) else (
+    echo [%date% %time%] handle.exe not found, trying openfiles... >> ""{cleanupLogPath}""
+    openfiles /query /fo table 2>>""{cleanupLogPath}"" | findstr /i ""UniversityAutoSetup"" >> ""{cleanupLogPath}"" 2>&1
+)
+
+:: Try to delete individual files first to see which one fails
+echo [%date% %time%] Attempting to delete individual files... >> ""{cleanupLogPath}""
+for %%f in (""{LocalAppFolder}\*.*"") do (
+    del /f /q ""%%f"" 2>>""{cleanupLogPath}""
+    if exist ""%%f"" (
+        echo [%date% %time%] LOCKED: %%f >> ""{cleanupLogPath}""
+    ) else (
+        echo [%date% %time%] Deleted: %%f >> ""{cleanupLogPath}""
+    )
+)
+
 :: Try to delete the app folder (with more retries and longer delays)
 set retries=20
 :deleteloop
