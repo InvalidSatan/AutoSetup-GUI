@@ -12,18 +12,18 @@
             <!-- Page Header -->
             <DockPanel Margin="0,0,0,20">
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button x:Name="BtnCopy" Content="Copy to Clipboard" Style="{StaticResource SecondaryButtonStyle}"
+                    <Button x:Name="BtnCopy" Content="Copy to Clipboard" Style="{DynamicResource SecondaryButtonStyle}"
                             Click="BtnCopy_Click" Margin="0,0,8,0"/>
-                    <Button x:Name="BtnRefresh" Content="Refresh" Style="{StaticResource SecondaryButtonStyle}"
+                    <Button x:Name="BtnRefresh" Content="Refresh" Style="{DynamicResource SecondaryButtonStyle}"
                             Click="BtnRefresh_Click"/>
                 </StackPanel>
-                <TextBlock Text="System Information" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center"/>
+                <TextBlock Text="System Information" Style="{DynamicResource HeaderTextStyle}" VerticalAlignment="Center"/>
             </DockPanel>
 
             <!-- Asset Information -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Asset Information" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Asset Information" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -36,25 +36,25 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Service Tag:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtServiceTag" Text="--" Margin="0,0,20,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Service Tag:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtServiceTag" Text="--" Margin="0,0,20,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Computer Name:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="3" x:Name="TxtComputerName" Text="--" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Computer Name:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" x:Name="TxtComputerName" Text="--" Margin="0,0,0,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtManufacturer" Text="--" Margin="0,0,20,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtManufacturer" Text="--" Margin="0,0,20,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Model:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtModel" Text="--"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Model:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtModel" Text="--" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- BIOS Information -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="BIOS" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="BIOS" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -63,19 +63,19 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Column="0" Text="Version:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="1" x:Name="TxtBiosVersion" Text="--" Margin="0,0,20,0"/>
+                        <TextBlock Grid.Column="0" Text="Version:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Column="1" x:Name="TxtBiosVersion" Text="--" Margin="0,0,20,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Column="2" Text="Release Date:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Column="3" x:Name="TxtBiosDate" Text="--"/>
+                        <TextBlock Grid.Column="2" Text="Release Date:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Column="3" x:Name="TxtBiosDate" Text="--" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Operating System -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Operating System" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Operating System" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -89,28 +89,28 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" x:Name="TxtOSName" Text="--" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" x:Name="TxtOSName" Text="--" Margin="0,0,0,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtOSVersion" Text="--" Margin="0,0,20,12"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtOSVersion" Text="--" Margin="0,0,20,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Build:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtOSBuild" Text="--" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Build:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtOSBuild" Text="--" Margin="0,0,0,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtOSArch" Text="--" Margin="0,0,20,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Architecture:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtOSArch" Text="--" Margin="0,0,20,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="2" Text="Last Boot:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="2" Grid.Column="3" x:Name="TxtLastBoot" Text="--"/>
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="Last Boot:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="3" x:Name="TxtLastBoot" Text="--" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Network Information -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Network" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Network" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -123,25 +123,25 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Ethernet MAC:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtEthernetMac" Text="--" Margin="0,0,20,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Ethernet MAC:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtEthernetMac" Text="--" Margin="0,0,20,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="WiFi MAC:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="3" x:Name="TxtWifiMac" Text="--" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="WiFi MAC:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" x:Name="TxtWifiMac" Text="--" Margin="0,0,0,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Domain:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtDomain" Text="--" Margin="0,0,20,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Domain:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtDomain" Text="--" Margin="0,0,20,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Domain Joined:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtDomainJoined" Text="--"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Domain Joined:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtDomainJoined" Text="--" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Hardware -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Hardware" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Hardware" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -153,22 +153,22 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Processor:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtProcessor" Text="--" Margin="0,0,0,12" TextWrapping="Wrap"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Processor:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtProcessor" Text="--" Margin="0,0,0,12" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Cores:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtCores" Text="--" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Cores:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtCores" Text="--" Margin="0,0,0,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Total RAM:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtRAM" Text="--"/>
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Total RAM:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtRAM" Text="--" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>
 
             <!-- Storage -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Storage" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Storage" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <ItemsControl x:Name="DiskList">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -179,11 +179,11 @@
                                         <ColumnDefinition Width="100"/>
                                         <ColumnDefinition Width="100"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding DriveLetter}" FontWeight="SemiBold"/>
+                                    <TextBlock Grid.Column="0" Text="{Binding DriveLetter}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                     <ProgressBar Grid.Column="1" Value="{Binding UsedPercentage, Mode=OneWay}" Minimum="0" Maximum="100"
-                                                 Height="16" Margin="0,0,12,0" Style="{StaticResource ModernProgressBarStyle}"/>
-                                    <TextBlock Grid.Column="2" Text="{Binding FreeSpaceFormatted}" HorizontalAlignment="Right"/>
-                                    <TextBlock Grid.Column="3" Text="{Binding TotalSizeFormatted}" HorizontalAlignment="Right" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                 Height="16" Margin="0,0,12,0" Style="{DynamicResource ModernProgressBarStyle}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding FreeSpaceFormatted}" HorizontalAlignment="Right" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding TotalSizeFormatted}" HorizontalAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}"/>
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -192,9 +192,9 @@
             </Border>
 
             <!-- SCCM Client -->
-            <Border Style="{StaticResource CardStyle}">
+            <Border Style="{DynamicResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="SCCM Client" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="SCCM Client" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityGoldBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="160"/>
@@ -207,17 +207,17 @@
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Installed:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtSCCMInstalled" Text="--" Margin="0,0,20,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Installed:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtSCCMInstalled" Text="--" Margin="0,0,20,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,12"/>
-                        <TextBlock Grid.Row="0" Grid.Column="3" x:Name="TxtSCCMVersion" Text="--" Margin="0,0,0,12"/>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="Version:" FontWeight="SemiBold" Margin="0,0,0,12" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="3" x:Name="TxtSCCMVersion" Text="--" Margin="0,0,0,12" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Site Code:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtSCCMSiteCode" Text="--" Margin="0,0,20,0"/>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Site Code:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtSCCMSiteCode" Text="--" Margin="0,0,20,0" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Management Point:" FontWeight="SemiBold"/>
-                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtSCCMMP" Text="--"/>
+                        <TextBlock Grid.Row="1" Grid.Column="2" Text="Management Point:" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="3" x:Name="TxtSCCMMP" Text="--" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </Grid>
                 </StackPanel>
             </Border>

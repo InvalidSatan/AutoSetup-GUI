@@ -10,12 +10,12 @@
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel>
             <!-- Page Header -->
-            <TextBlock Text="Settings" Style="{StaticResource HeaderTextStyle}" Margin="0,0,0,20"/>
+            <TextBlock Text="Settings" Style="{DynamicResource HeaderTextStyle}" Margin="0,0,0,20"/>
 
             <!-- Application Info -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Application" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Application" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityBlueBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -40,9 +40,9 @@
             </Border>
 
             <!-- Log Settings -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Logging" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Logging" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityBlueBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -65,9 +65,9 @@
             </Border>
 
             <!-- Dell Command Update Settings -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Dell Command Update" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Dell Command Update" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityBlueBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -93,9 +93,9 @@
             </Border>
 
             <!-- SCCM Settings -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="SCCM Client" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="SCCM Client" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityBlueBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -116,9 +116,9 @@
             </Border>
 
             <!-- Image Check Settings -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <StackPanel>
-                    <TextBlock Text="Image Checks" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Image Checks" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityBlueBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>
@@ -139,9 +139,9 @@
             </Border>
 
             <!-- Keyboard Shortcuts -->
-            <Border Style="{StaticResource CardStyle}">
+            <Border Style="{DynamicResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Keyboard Shortcuts" Style="{StaticResource SubheaderTextStyle}" Foreground="{StaticResource UniversityBlueBrush}" Margin="0,0,0,16"/>
+                    <TextBlock Text="Keyboard Shortcuts" Style="{DynamicResource SubheaderTextStyle}" Foreground="{DynamicResource UniversityBlueBrush}" Margin="0,0,0,16"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="150"/>

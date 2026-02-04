@@ -9,20 +9,20 @@
 
     <Grid>
         <!-- Loading Overlay -->
-        <Border x:Name="LoadingOverlay" Background="#80FFFFFF" Visibility="Visible" Panel.ZIndex="100">
+        <Border x:Name="LoadingOverlay" Background="{DynamicResource OverlayBackgroundBrush}" Visibility="Visible" Panel.ZIndex="100">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,12"/>
-                <TextBlock Text="Loading system information..." Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+                <TextBlock Text="Loading system information..." Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
             </StackPanel>
         </Border>
 
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0">
             <!-- Page Title -->
-            <TextBlock Text="Dashboard" Style="{StaticResource HeaderTextStyle}" Margin="0,0,0,20"/>
+            <TextBlock Text="Dashboard" Style="{DynamicResource HeaderTextStyle}" Margin="0,0,0,20"/>
 
             <!-- System Summary Card -->
-            <Border Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,16">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -30,7 +30,7 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="System Summary" Style="{StaticResource SubheaderTextStyle}" Margin="0,0,0,16"/>
+                        <TextBlock Text="System Summary" Style="{DynamicResource SubheaderTextStyle}" Margin="0,0,0,16"/>
 
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -44,17 +44,17 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Service Tag:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtServiceTag" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Service Tag:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="0" Grid.Column="1" x:Name="TxtServiceTag" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Computer Name:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtComputerName" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Computer Name:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtComputerName" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Ethernet MAC:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtEthernetMac" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Ethernet MAC:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtEthernetMac" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="WiFi MAC:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtWifiMac" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="WiFi MAC:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtWifiMac" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Grid>
                     </StackPanel>
 
@@ -72,19 +72,19 @@
                                 <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Hardware" Style="{StaticResource SubheaderTextStyle}" Margin="0,0,0,16"/>
+                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Text="Hardware" Style="{DynamicResource SubheaderTextStyle}" Margin="0,0,0,16"/>
 
-                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtManufacturer" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Manufacturer:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TxtManufacturer" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Model:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtModel" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Model:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TxtModel" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                            <TextBlock Grid.Row="3" Grid.Column="0" Text="OS:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtOS" Text="Loading..." Margin="0,0,0,8" TextWrapping="Wrap"/>
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="OS:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="3" Grid.Column="1" x:Name="TxtOS" Text="Loading..." Margin="0,0,0,8" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}"/>
 
-                            <TextBlock Grid.Row="4" Grid.Column="0" Text="SCCM Client:" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtSCCM" Text="Loading..." Margin="0,0,0,8"/>
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="SCCM Client:" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Grid.Row="4" Grid.Column="1" x:Name="TxtSCCM" Text="Loading..." Margin="0,0,0,8" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </Grid>
                     </StackPanel>
                 </Grid>
@@ -100,47 +100,47 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Task Status Card -->
-                <Border Grid.Column="0" Style="{StaticResource CardStyle}" Margin="0,0,8,0">
+                <Border Grid.Column="0" Style="{DynamicResource CardStyle}" Margin="0,0,8,0">
                     <StackPanel>
-                        <TextBlock Text="Tasks" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock x:Name="TxtTaskStatus" Text="Ready to run" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="Tasks" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="TxtTaskStatus" Text="Ready to run" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Image Checks Card -->
-                <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="8,0,8,0">
+                <Border Grid.Column="1" Style="{DynamicResource CardStyle}" Margin="8,0,8,0">
                     <StackPanel>
-                        <TextBlock Text="Image Checks" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock x:Name="TxtImageChecks" Text="Not run yet" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="Image Checks" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="TxtImageChecks" Text="Not run yet" Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Dell Updates Card -->
-                <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="8,0,8,0">
+                <Border Grid.Column="2" Style="{DynamicResource CardStyle}" Margin="8,0,8,0">
                     <StackPanel>
-                        <TextBlock Text="Dell Updates" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock x:Name="TxtDellStatus" Text="Checking..." Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="Dell Updates" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="TxtDellStatus" Text="Checking..." Foreground="{DynamicResource TextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
                 <!-- Logs Card -->
-                <Border Grid.Column="3" Style="{StaticResource CardStyle}" Margin="8,0,0,0">
+                <Border Grid.Column="3" Style="{DynamicResource CardStyle}" Margin="8,0,0,0">
                     <StackPanel>
-                        <TextBlock Text="Log Location" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <TextBlock x:Name="TxtLogLocation" Text="Initializing..." Foreground="{StaticResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Text="Log Location" FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                        <TextBlock x:Name="TxtLogLocation" Text="Initializing..." Foreground="{DynamicResource TextSecondaryBrush}" TextTrimming="CharacterEllipsis"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
             <!-- Get Started Section -->
-            <Border Style="{StaticResource CardStyle}">
+            <Border Style="{DynamicResource CardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Get Started" Style="{StaticResource SubheaderTextStyle}" Margin="0,0,0,12"/>
-                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,16">
+                    <TextBlock Text="Get Started" Style="{DynamicResource SubheaderTextStyle}" Margin="0,0,0,12"/>
+                    <TextBlock TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16">
                         Run the complete setup to update Group Policy, execute SCCM client actions,
                         install Dell updates, and verify the image configuration.
                     </TextBlock>
-                    <Button x:Name="BtnStartSetup" Content="Start Complete Setup" Style="{StaticResource PrimaryButtonStyle}"
+                    <Button x:Name="BtnStartSetup" Content="Start Complete Setup" Style="{DynamicResource PrimaryButtonStyle}"
                             HorizontalAlignment="Left" Click="BtnStartSetup_Click"/>
                 </StackPanel>
             </Border>

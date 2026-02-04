@@ -18,33 +18,33 @@
         <!-- Page Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Button x:Name="BtnOpenFolder" Content="Open Folder" Style="{StaticResource SecondaryButtonStyle}"
+                <Button x:Name="BtnOpenFolder" Content="Open Folder" Style="{DynamicResource SecondaryButtonStyle}"
                         Click="BtnOpenFolder_Click" Margin="0,0,8,0"/>
-                <Button x:Name="BtnClear" Content="Clear" Style="{StaticResource SecondaryButtonStyle}"
+                <Button x:Name="BtnClear" Content="Clear" Style="{DynamicResource SecondaryButtonStyle}"
                         Click="BtnClear_Click"/>
             </StackPanel>
-            <TextBlock Text="Log Viewer" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center"/>
+            <TextBlock Text="Log Viewer" Style="{DynamicResource HeaderTextStyle}" VerticalAlignment="Center"/>
         </DockPanel>
 
         <!-- Filters -->
-        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Padding="12">
+        <Border Grid.Row="1" Style="{DynamicResource CardStyle}" Margin="0,0,0,16" Padding="12">
             <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <CheckBox x:Name="ChkDebug" Content="Debug" IsChecked="False" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                <CheckBox x:Name="ChkInfo" Content="Info" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                <CheckBox x:Name="ChkWarning" Content="Warning" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                <CheckBox x:Name="ChkError" Content="Error" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
-                <CheckBox x:Name="ChkSuccess" Content="Success" IsChecked="True" Checked="Filter_Changed" Unchecked="Filter_Changed"/>
+                <TextBlock Text="Filter:" VerticalAlignment="Center" Margin="0,0,12,0" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <CheckBox x:Name="ChkDebug" Content="Debug" IsChecked="False" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <CheckBox x:Name="ChkInfo" Content="Info" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <CheckBox x:Name="ChkWarning" Content="Warning" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <CheckBox x:Name="ChkError" Content="Error" IsChecked="True" Margin="0,0,16,0" Checked="Filter_Changed" Unchecked="Filter_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <CheckBox x:Name="ChkSuccess" Content="Success" IsChecked="True" Checked="Filter_Changed" Unchecked="Filter_Changed" Foreground="{DynamicResource TextPrimaryBrush}"/>
 
                 <Separator Margin="16,0"/>
 
-                <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                <TextBox x:Name="TxtSearch" Width="200" TextChanged="TxtSearch_TextChanged" VerticalContentAlignment="Center" Padding="8,4"/>
+                <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <TextBox x:Name="TxtSearch" Width="200" TextChanged="TxtSearch_TextChanged" VerticalContentAlignment="Center" Padding="8,4" Background="{DynamicResource SurfaceBrush}" Foreground="{DynamicResource TextPrimaryBrush}" BorderBrush="{DynamicResource BorderBrush}"/>
             </StackPanel>
         </Border>
 
         <!-- Log Content -->
-        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Padding="0">
+        <Border Grid.Row="2" Style="{DynamicResource CardStyle}" Padding="0">
             <ListBox x:Name="LogList"
                      Background="Transparent"
                      BorderThickness="0"
@@ -62,25 +62,25 @@
 
                             <TextBlock Grid.Column="0" Text="{Binding FormattedTimestamp}"
                                        FontFamily="Consolas" FontSize="12"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
 
                             <Border Grid.Column="1" CornerRadius="3" Padding="6,2" Margin="4,0"
                                     HorizontalAlignment="Left" VerticalAlignment="Center">
                                 <Border.Style>
                                     <Style TargetType="Border">
-                                        <Setter Property="Background" Value="{StaticResource PendingBackgroundBrush}"/>
+                                        <Setter Property="Background" Value="{DynamicResource PendingBackgroundBrush}"/>
                                         <Style.Triggers>
                                             <DataTrigger Binding="{Binding Level}" Value="Success">
-                                                <Setter Property="Background" Value="{StaticResource SuccessBackgroundBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBackgroundBrush}"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Level}" Value="Warning">
-                                                <Setter Property="Background" Value="{StaticResource WarningBackgroundBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Level}" Value="Error">
-                                                <Setter Property="Background" Value="{StaticResource ErrorBackgroundBrush}"/>
+                                                <Setter Property="Background" Value="{DynamicResource ErrorBackgroundBrush}"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Level}" Value="Info">
-                                                <Setter Property="Background" Value="#E8F4FC"/>
+                                                <Setter Property="Background" Value="{DynamicResource InfoBackgroundBrush}"/>
                                             </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
@@ -88,19 +88,19 @@
                                 <TextBlock Text="{Binding Level}" FontSize="10" FontWeight="SemiBold">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Level}" Value="Success">
-                                                    <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Warning">
-                                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Error">
-                                                    <Setter Property="Foreground" Value="{StaticResource ErrorBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Level}" Value="Info">
-                                                    <Setter Property="Foreground" Value="{StaticResource InfoBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource InfoBrush}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -110,7 +110,7 @@
 
                             <TextBlock Grid.Column="2" Text="{Binding Message}"
                                        FontFamily="Consolas" FontSize="12"
-                                       TextWrapping="Wrap"/>
+                                       TextWrapping="Wrap" Foreground="{DynamicResource TextPrimaryBrush}"/>
                         </Grid>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
@@ -118,10 +118,10 @@
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" Background="#F8F8F8" Padding="12,8" Margin="0,16,0,0" CornerRadius="4">
+        <Border Grid.Row="3" Background="{DynamicResource StatusBarBackgroundBrush}" Padding="12,8" Margin="0,16,0,0" CornerRadius="4">
             <DockPanel>
-                <TextBlock DockPanel.Dock="Right" x:Name="TxtLogPath" Text="" Foreground="{StaticResource TextSecondaryBrush}"/>
-                <TextBlock x:Name="TxtLogCount" Text="0 entries" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock DockPanel.Dock="Right" x:Name="TxtLogPath" Text="" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                <TextBlock x:Name="TxtLogCount" Text="0 entries" Foreground="{DynamicResource TextSecondaryBrush}"/>
             </DockPanel>
         </Border>
     </Grid>

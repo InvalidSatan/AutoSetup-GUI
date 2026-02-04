@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using AutoSetupGUI.Infrastructure;
 using AutoSetupGUI.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -27,6 +28,10 @@ public partial class MainWindow : Window
 
         _systemInfoService = App.Services.GetRequiredService<ISystemInfoService>();
         _loggingService = App.Services.GetRequiredService<ILoggingService>();
+
+        // Load saved theme preference and update checkbox
+        ThemeManager.LoadSavedTheme();
+        ChkDarkMode.IsChecked = ThemeManager.IsDarkMode;
 
         // Add command bindings for keyboard shortcuts
         CommandBindings.Add(new CommandBinding(NavigationCommands.Refresh, Refresh_Executed));
@@ -203,5 +208,10 @@ public partial class MainWindow : Window
         {
             systemInfoView.RefreshData();
         }
+    }
+
+    private void ChkDarkMode_Changed(object sender, RoutedEventArgs e)
+    {
+        ThemeManager.SetTheme(ChkDarkMode.IsChecked == true);
     }
 }

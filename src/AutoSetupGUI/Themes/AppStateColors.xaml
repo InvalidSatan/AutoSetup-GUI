@@ -62,4 +62,10 @@
     <SolidColorBrush x:Key="ErrorBackgroundBrush" Color="#FFEBE8"/>
     <SolidColorBrush x:Key="PendingBackgroundBrush" Color="#F0F0F0"/>
 
+    <!-- Additional UI Brushes for Light Theme -->
+    <SolidColorBrush x:Key="StatusBarBackgroundBrush" Color="#F8F8F8"/>
+    <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#80FFFFFF"/>
+    <SolidColorBrush x:Key="CardInnerBrush" Color="#F8F9FA"/>
+    <SolidColorBrush x:Key="InfoBackgroundBrush" Color="#E8F4FC"/>
+
 </ResourceDictionary>

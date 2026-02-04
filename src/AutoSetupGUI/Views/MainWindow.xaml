@@ -9,7 +9,7 @@
         Height="800" Width="1200"
         MinHeight="600" MinWidth="900"
         WindowStartupLocation="CenterScreen"
-        Background="{StaticResource BackgroundBrush}">
+        Background="{DynamicResource BackgroundBrush}">
 
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Close" Executed="Close_Executed"/>
@@ -27,7 +27,7 @@
         </Grid.ColumnDefinitions>
 
         <!-- Navigation Panel -->
-        <Border Grid.Column="0" Background="{StaticResource SurfaceBrush}" BorderThickness="0,0,1,0" BorderBrush="{StaticResource BorderBrush}">
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderThickness="0,0,1,0" BorderBrush="{DynamicResource BorderBrush}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -36,7 +36,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header/Logo -->
-                <Border Grid.Row="0" Background="{StaticResource UniversityBlueBrush}" Padding="16">
+                <Border Grid.Row="0" Background="{DynamicResource UniversityBlueBrush}" Padding="16">
                     <StackPanel>
                         <TextBlock Text="University" FontSize="12" Foreground="White" Opacity="0.8"/>
                         <TextBlock Text="Auto Setup" FontSize="22" FontWeight="Bold" Foreground="White"/>
@@ -79,15 +79,15 @@
                 </StackPanel>
 
                 <!-- Status Bar -->
-                <Border Grid.Row="2" Background="#F8F8F8" Padding="12,8">
+                <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Padding="12,8">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                             <Ellipse x:Name="NetworkIndicator" Width="8" Height="8" Fill="#107C10" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="NetworkStatus" Text="Network: Connected" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock x:Name="NetworkStatus" Text="Network: Connected" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Ellipse x:Name="PDriveIndicator" Width="8" Height="8" Fill="#107C10" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="PDriveStatus" Text="P:\ Drive: Available" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock x:Name="PDriveStatus" Text="P:\ Drive: Available" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}"/>
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -102,9 +102,9 @@
             </Grid.RowDefinitions>
 
             <!-- Quick Actions Toolbar -->
-            <Border Grid.Row="0" Background="{StaticResource SurfaceBrush}" BorderThickness="0,0,0,1" BorderBrush="{StaticResource BorderBrush}" Padding="20,12">
+            <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderBrush}" Padding="20,12">
                 <DockPanel>
-                    <TextBlock DockPanel.Dock="Left" Text="Quick Actions:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,16,0"/>
+                    <TextBlock DockPanel.Dock="Left" Text="Quick Actions:" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,16,0"/>
 
                     <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                         <Button x:Name="BtnRunAll" Content="Run All" Style="{StaticResource PrimaryButtonStyle}" Click="BtnRunAll_Click" Margin="0,0,8,0"/>
@@ -114,7 +114,8 @@
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
-                        <CheckBox x:Name="ChkDarkMode" Content="Dark Mode" Style="{StaticResource ModernCheckBoxStyle}" VerticalAlignment="Center" IsEnabled="False"/>
+                        <CheckBox x:Name="ChkDarkMode" Content="Dark Mode" Style="{StaticResource ModernCheckBoxStyle}" VerticalAlignment="Center"
+                                  Checked="ChkDarkMode_Changed" Unchecked="ChkDarkMode_Changed"/>
                     </StackPanel>
                 </DockPanel>
             </Border>

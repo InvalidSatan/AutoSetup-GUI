@@ -18,20 +18,20 @@
         <!-- Page Header -->
         <DockPanel Grid.Row="0" Margin="0,0,0,20">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                <Button x:Name="BtnCancel" Content="Cancel" Style="{StaticResource SecondaryButtonStyle}"
+                <Button x:Name="BtnCancel" Content="Cancel" Style="{DynamicResource SecondaryButtonStyle}"
                         Click="BtnCancel_Click" Visibility="Collapsed" Margin="0,0,8,0"/>
-                <Button x:Name="BtnRunAll" Content="Run All Selected" Style="{StaticResource PrimaryButtonStyle}"
+                <Button x:Name="BtnRunAll" Content="Run All Selected" Style="{DynamicResource PrimaryButtonStyle}"
                         Click="BtnRunAll_Click"/>
             </StackPanel>
-            <TextBlock Text="Tasks" Style="{StaticResource HeaderTextStyle}" VerticalAlignment="Center"/>
+            <TextBlock Text="Tasks" Style="{DynamicResource HeaderTextStyle}" VerticalAlignment="Center"/>
         </DockPanel>
 
         <!-- Progress Section -->
-        <Border Grid.Row="1" x:Name="ProgressSection" Style="{StaticResource CardStyle}" Margin="0,0,0,16" Visibility="Collapsed">
+        <Border Grid.Row="1" x:Name="ProgressSection" Style="{DynamicResource CardStyle}" Margin="0,0,0,16" Visibility="Collapsed">
             <StackPanel>
-                <TextBlock x:Name="TxtProgressStatus" Text="Running setup..." FontWeight="SemiBold" Margin="0,0,0,8"/>
-                <ProgressBar x:Name="ProgressBar" Style="{StaticResource ModernProgressBarStyle}" Value="0"/>
-                <TextBlock x:Name="TxtProgressDetail" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                <TextBlock x:Name="TxtProgressStatus" Text="Running setup..." FontWeight="SemiBold" Margin="0,0,0,8" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                <ProgressBar x:Name="ProgressBar" Style="{DynamicResource ModernProgressBarStyle}" Value="0"/>
+                <TextBlock x:Name="TxtProgressDetail" Text="" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,8,0,0"/>
             </StackPanel>
         </Border>
 
@@ -39,7 +39,7 @@
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <!-- Group Policy Update -->
-                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,12">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -50,23 +50,23 @@
                         <CheckBox x:Name="ChkGroupPolicy" Grid.Column="0" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
 
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="Group Policy Update" FontWeight="SemiBold" FontSize="16"/>
-                            <TextBlock Text="Runs gpupdate /force to refresh all Group Policies" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                            <TextBlock Text="Group Policy Update" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Runs gpupdate /force to refresh all Group Policies" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <Border x:Name="StatusGP" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                <Border x:Name="StatusGP" Background="{DynamicResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
                                     <TextBlock x:Name="TxtStatusGP" Text="Pending" FontSize="12"/>
                                 </Border>
-                                <TextBlock x:Name="TxtDurationGP" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtDurationGP" Text="" Foreground="{DynamicResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <Button Grid.Column="2" x:Name="BtnRunGP" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                        <Button Grid.Column="2" x:Name="BtnRunGP" Content="Run" Style="{DynamicResource SecondaryButtonStyle}"
                                 Click="BtnRunGP_Click" VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
                 <!-- SCCM Client Actions -->
-                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,12">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -78,17 +78,17 @@
                             <CheckBox x:Name="ChkSCCM" Grid.Column="0" IsChecked="True" VerticalAlignment="Top" Margin="0,4,16,0"/>
 
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="SCCM Client Actions" FontWeight="SemiBold" FontSize="16"/>
-                                <TextBlock Text="Triggers SCCM client actions for policy and inventory updates" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                <TextBlock Text="SCCM Client Actions" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                <TextBlock Text="Triggers SCCM client actions for policy and inventory updates" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <Border x:Name="StatusSCCM" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                    <Border x:Name="StatusSCCM" Background="{DynamicResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
                                         <TextBlock x:Name="TxtStatusSCCM" Text="Pending" FontSize="12"/>
                                     </Border>
-                                    <TextBlock x:Name="TxtDurationSCCM" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtDurationSCCM" Text="" Foreground="{DynamicResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </StackPanel>
 
-                            <Button Grid.Column="2" x:Name="BtnRunSCCM" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                            <Button Grid.Column="2" x:Name="BtnRunSCCM" Content="Run" Style="{DynamicResource SecondaryButtonStyle}"
                                     Click="BtnRunSCCM_Click" VerticalAlignment="Top"/>
                         </Grid>
 
@@ -101,7 +101,7 @@
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                         <Border Grid.Column="1" CornerRadius="4" Padding="8,2" Background="{Binding StatusBackground}">
                                             <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="{Binding StatusForeground}"/>
                                         </Border>
@@ -113,7 +113,7 @@
                 </Border>
 
                 <!-- Dell Command Update -->
-                <Border Style="{StaticResource CardStyle}" Margin="0,0,0,12">
+                <Border Style="{DynamicResource CardStyle}" Margin="0,0,0,12">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -125,23 +125,23 @@
                             <CheckBox x:Name="ChkDell" Grid.Column="0" IsChecked="True" VerticalAlignment="Top" Margin="0,4,16,0"/>
 
                             <StackPanel Grid.Column="1">
-                                <TextBlock Text="Dell Command Update" FontWeight="SemiBold" FontSize="16"/>
+                                <TextBlock Text="Dell Command Update" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                                 <TextBlock x:Name="TxtDellDescription" Text="Install and run Dell updates (Dell systems only)"
-                                           Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                           Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                    <Border x:Name="StatusDell" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                    <Border x:Name="StatusDell" Background="{DynamicResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
                                         <TextBlock x:Name="TxtStatusDell" Text="Pending" FontSize="12"/>
                                     </Border>
-                                    <TextBlock x:Name="TxtDurationDell" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtDurationDell" Text="" Foreground="{DynamicResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                                 </StackPanel>
                             </StackPanel>
 
-                            <Button Grid.Column="2" x:Name="BtnRunDell" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                            <Button Grid.Column="2" x:Name="BtnRunDell" Content="Run" Style="{DynamicResource SecondaryButtonStyle}"
                                     Click="BtnRunDell_Click" VerticalAlignment="Top"/>
                         </Grid>
 
                         <!-- DCU Progress Details Panel -->
-                        <Border x:Name="DellProgressPanel" Visibility="Collapsed" Background="#F8F9FA" CornerRadius="4" Margin="40,12,0,0" Padding="12">
+                        <Border x:Name="DellProgressPanel" Visibility="Collapsed" Background="{DynamicResource CardInnerBrush}" CornerRadius="4" Margin="40,12,0,0" Padding="12">
                             <StackPanel>
                                 <!-- Overall Progress Header -->
                                 <Grid Margin="0,0,0,12">
@@ -150,17 +150,17 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0">
-                                        <TextBlock x:Name="TxtDellPhase" Text="Initializing..." FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource InfoBrush}"/>
-                                        <TextBlock x:Name="TxtDellUpdatesCount" Text="Checking for updates..." Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,2,0,0"/>
+                                        <TextBlock x:Name="TxtDellPhase" Text="Initializing..." FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource InfoBrush}"/>
+                                        <TextBlock x:Name="TxtDellUpdatesCount" Text="Checking for updates..." Foreground="{DynamicResource TextSecondaryBrush}" FontSize="12" Margin="0,2,0,0"/>
                                     </StackPanel>
-                                    <TextBlock Grid.Column="1" x:Name="TxtDellOverallPercent" Text="0%" FontWeight="SemiBold" FontSize="18" Foreground="{StaticResource InfoBrush}" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" x:Name="TxtDellOverallPercent" Text="0%" FontWeight="SemiBold" FontSize="18" Foreground="{DynamicResource InfoBrush}" VerticalAlignment="Center"/>
                                 </Grid>
 
                                 <!-- Overall Progress Bar -->
-                                <ProgressBar x:Name="DellProgressBar" Height="6" Value="0" Maximum="100" Style="{StaticResource ModernProgressBarStyle}" Margin="0,0,0,12"/>
+                                <ProgressBar x:Name="DellProgressBar" Height="6" Value="0" Maximum="100" Style="{DynamicResource ModernProgressBarStyle}" Margin="0,0,0,12"/>
 
                                 <!-- Current Update Info -->
-                                <Border x:Name="CurrentUpdatePanel" Visibility="Collapsed" Background="White" CornerRadius="4" Padding="12" Margin="0,0,0,8" BorderBrush="#E0E0E0" BorderThickness="1">
+                                <Border x:Name="CurrentUpdatePanel" Visibility="Collapsed" Background="{DynamicResource SurfaceBrush}" CornerRadius="4" Padding="12" Margin="0,0,0,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                                     <Grid>
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto"/>
@@ -173,9 +173,9 @@
                                         </Grid.ColumnDefinitions>
 
                                         <!-- Update Name -->
-                                        <TextBlock Grid.Row="0" Grid.Column="0" x:Name="TxtCurrentUpdateName" Text="Update Name" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
-                                        <Border Grid.Row="0" Grid.Column="1" x:Name="CurrentUpdateStatusBadge" CornerRadius="4" Padding="8,2" Background="#E1F0FA">
-                                            <TextBlock x:Name="TxtCurrentUpdateStatus" Text="Downloading" FontSize="11" Foreground="#03659C"/>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" x:Name="TxtCurrentUpdateName" Text="Update Name" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                        <Border Grid.Row="0" Grid.Column="1" x:Name="CurrentUpdateStatusBadge" CornerRadius="4" Padding="8,2" Background="{DynamicResource InfoBackgroundBrush}">
+                                            <TextBlock x:Name="TxtCurrentUpdateStatus" Text="Downloading" FontSize="11" Foreground="{DynamicResource InfoBrush}"/>
                                         </Border>
 
                                         <!-- Download Progress -->
@@ -186,9 +186,9 @@
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="40"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Download" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                                <ProgressBar Grid.Column="1" x:Name="CurrentDownloadBar" Height="4" Value="0" Maximum="100" Style="{StaticResource ModernProgressBarStyle}" Margin="8,0"/>
-                                                <TextBlock Grid.Column="2" x:Name="TxtCurrentDownloadPercent" Text="0%" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                                                <TextBlock Text="Download" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <ProgressBar Grid.Column="1" x:Name="CurrentDownloadBar" Height="4" Value="0" Maximum="100" Style="{DynamicResource ModernProgressBarStyle}" Margin="8,0"/>
+                                                <TextBlock Grid.Column="2" x:Name="TxtCurrentDownloadPercent" Text="0%" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
                                             </Grid>
                                         </StackPanel>
 
@@ -200,9 +200,9 @@
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="40"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Text="Install" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                                                <ProgressBar Grid.Column="1" x:Name="CurrentInstallBar" Height="4" Value="0" Maximum="100" Style="{StaticResource ModernProgressBarStyle}" Margin="8,0"/>
-                                                <TextBlock Grid.Column="2" x:Name="TxtCurrentInstallPercent" Text="0%" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
+                                                <TextBlock Text="Install" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                                                <ProgressBar Grid.Column="1" x:Name="CurrentInstallBar" Height="4" Value="0" Maximum="100" Style="{DynamicResource ModernProgressBarStyle}" Margin="8,0"/>
+                                                <TextBlock Grid.Column="2" x:Name="TxtCurrentInstallPercent" Text="0%" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Right"/>
                                             </Grid>
                                         </StackPanel>
                                     </Grid>
@@ -212,15 +212,15 @@
                                 <ItemsControl x:Name="CompletedUpdatesList" Margin="0,4,0,0">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Background="White" CornerRadius="4" Padding="12,8" Margin="0,0,0,4" BorderBrush="#E8F5E8" BorderThickness="1">
+                                            <Border Background="{DynamicResource SurfaceBrush}" CornerRadius="4" Padding="12,8" Margin="0,0,0,4" BorderBrush="{DynamicResource SuccessBackgroundBrush}" BorderThickness="1">
                                                 <Grid>
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                                    <Border Grid.Column="1" CornerRadius="4" Padding="8,2" Background="#E8F5E8">
-                                                        <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="#69AA61"/>
+                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}"/>
+                                                    <Border Grid.Column="1" CornerRadius="4" Padding="8,2" Background="{DynamicResource SuccessBackgroundBrush}">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="11" Foreground="{DynamicResource SuccessBrush}"/>
                                                     </Border>
                                                 </Grid>
                                             </Border>
@@ -229,15 +229,15 @@
                                 </ItemsControl>
 
                                 <!-- Current Activity (for misc messages) -->
-                                <TextBlock x:Name="TxtDellCurrentActivity" Text="" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
+                                <TextBlock x:Name="TxtDellCurrentActivity" Text="" TextWrapping="Wrap" Foreground="{DynamicResource TextSecondaryBrush}" FontSize="11" Margin="0,8,0,0"/>
 
                                 <!-- Live Log Output (collapsible) -->
-                                <Expander Header="View Raw Output" Margin="0,8,0,0" IsExpanded="False">
-                                    <Border Background="White" BorderBrush="#E0E0E0" BorderThickness="1" CornerRadius="4" Margin="0,8,0,0">
+                                <Expander Header="View Raw Output" Margin="0,8,0,0" IsExpanded="False" Foreground="{DynamicResource TextPrimaryBrush}">
+                                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Margin="0,8,0,0">
                                         <ScrollViewer x:Name="DellLogScroller" Height="120" VerticalScrollBarVisibility="Auto">
                                             <TextBox x:Name="TxtDellLiveLog" IsReadOnly="True" BorderThickness="0"
                                                      FontFamily="Consolas" FontSize="10" TextWrapping="Wrap"
-                                                     Background="Transparent" Padding="8"/>
+                                                     Background="Transparent" Foreground="{DynamicResource TextSecondaryBrush}" Padding="8"/>
                                         </ScrollViewer>
                                     </Border>
                                 </Expander>
@@ -247,7 +247,7 @@
                 </Border>
 
                 <!-- Image Checks -->
-                <Border Style="{StaticResource CardStyle}">
+                <Border Style="{DynamicResource CardStyle}">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -258,18 +258,18 @@
                         <CheckBox x:Name="ChkImageChecks" Grid.Column="0" IsChecked="True" VerticalAlignment="Center" Margin="0,0,16,0"/>
 
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="Image Verification Checks" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="Image Verification Checks" FontWeight="SemiBold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}"/>
                             <TextBlock Text="Verify domain membership, SCCM client, disk space, network connectivity, and pending reboots"
-                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                       Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                             <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                                <Border x:Name="StatusChecks" Background="{StaticResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
+                                <Border x:Name="StatusChecks" Background="{DynamicResource PendingBackgroundBrush}" CornerRadius="4" Padding="8,4">
                                     <TextBlock x:Name="TxtStatusChecks" Text="Pending" FontSize="12"/>
                                 </Border>
-                                <TextBlock x:Name="TxtDurationChecks" Text="" Foreground="{StaticResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="TxtDurationChecks" Text="" Foreground="{DynamicResource TextSecondaryBrush}" Margin="12,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
 
-                        <Button Grid.Column="2" x:Name="BtnRunChecks" Content="Run" Style="{StaticResource SecondaryButtonStyle}"
+                        <Button Grid.Column="2" x:Name="BtnRunChecks" Content="Run" Style="{DynamicResource SecondaryButtonStyle}"
                                 Click="BtnRunChecks_Click" VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
@@ -277,12 +277,12 @@
         </ScrollViewer>
 
         <!-- Bottom Status Bar -->
-        <Border Grid.Row="3" Background="#F8F8F8" Padding="16,12" Margin="0,16,0,0" CornerRadius="4">
+        <Border Grid.Row="3" Background="{DynamicResource StatusBarBackgroundBrush}" Padding="16,12" Margin="0,16,0,0" CornerRadius="4">
             <DockPanel>
-                <Button DockPanel.Dock="Right" x:Name="BtnViewReport" Content="View Report" Style="{StaticResource SecondaryButtonStyle}"
+                <Button DockPanel.Dock="Right" x:Name="BtnViewReport" Content="View Report" Style="{DynamicResource SecondaryButtonStyle}"
                         Click="BtnViewReport_Click" Visibility="Collapsed"/>
                 <TextBlock x:Name="TxtFinalStatus" Text="Select tasks and click 'Run All Selected' to begin"
-                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                           Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center"/>
             </DockPanel>
         </Border>
     </Grid>
