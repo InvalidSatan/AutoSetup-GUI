@@ -572,6 +572,13 @@ public class ReportService : IReportService
             Application.Current.Dispatcher.Invoke(() =>
             {
                 var viewer = new PdfViewerWindow(filePath, requiresRestart);
+
+                // Set the main window as owner so the viewer closes when the main window closes
+                if (Application.Current.MainWindow != null)
+                {
+                    viewer.Owner = Application.Current.MainWindow;
+                }
+
                 viewer.Show();
             });
         }

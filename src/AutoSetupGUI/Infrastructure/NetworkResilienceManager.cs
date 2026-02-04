@@ -307,8 +307,8 @@ echo [%date% %time%] Cleanup script started >> ""{cleanupLogPath}""
 echo [%date% %time%] Target folder: {LocalAppFolder} >> ""{cleanupLogPath}""
 echo [%date% %time%] Waiting for PID {currentPid} to exit... >> ""{cleanupLogPath}""
 
-:: Wait for the application to fully exit
-ping localhost -n 5 > nul
+:: Wait longer for the application and all child windows to fully exit
+ping localhost -n 10 > nul
 
 :: Wait for process to exit (with timeout of ~60 seconds)
 set maxwait=30
@@ -324,14 +324,17 @@ if %errorlevel%==0 (
     goto waitloop
 )
 
-echo [%date% %time%] Process exited, starting cleanup >> ""{cleanupLogPath}""
+echo [%date% %time%] Process exited, waiting for file handles to release... >> ""{cleanupLogPath}""
+
+:: Wait additional time for file handles to be released (antivirus, etc.)
+ping localhost -n 10 > nul
 
 :trydelete
-:: Try to delete the app folder (with retries)
-set retries=10
+:: Try to delete the app folder (with more retries and longer delays)
+set retries=20
 :deleteloop
 if %retries%==0 (
-    echo [%date% %time%] Failed to delete after 10 retries >> ""{cleanupLogPath}""
+    echo [%date% %time%] Failed to delete after 20 retries >> ""{cleanupLogPath}""
     goto cleanup
 )
 echo [%date% %time%] Delete attempt, retries remaining: %retries% >> ""{cleanupLogPath}""
@@ -339,7 +342,8 @@ rd /s /q ""{LocalAppFolder}"" 2>>""{cleanupLogPath}""
 if exist ""{LocalAppFolder}"" (
     echo [%date% %time%] Folder still exists, retrying... >> ""{cleanupLogPath}""
     set /a retries=%retries%-1
-    ping localhost -n 3 > nul
+    :: Wait 5 seconds between retries
+    ping localhost -n 6 > nul
     goto deleteloop
 )
 
