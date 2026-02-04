@@ -32,6 +32,9 @@ public partial class DashboardView : Page
 
     public async void RefreshData()
     {
+        // Clear cache for fresh data on manual refresh
+        _systemInfoService.ClearCache();
+        LoadingOverlay.Visibility = Visibility.Visible;
         await LoadDataAsync();
     }
 
@@ -71,6 +74,11 @@ public partial class DashboardView : Page
             TxtServiceTag.Text = "Error loading";
             MessageBox.Show($"Error loading system information: {ex.Message}", "Error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+        finally
+        {
+            // Hide loading overlay
+            LoadingOverlay.Visibility = Visibility.Collapsed;
         }
     }
 

@@ -7,7 +7,16 @@
       Title="Dashboard"
       Background="Transparent">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <Grid>
+        <!-- Loading Overlay -->
+        <Border x:Name="LoadingOverlay" Background="#80FFFFFF" Visibility="Visible" Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,12"/>
+                <TextBlock Text="Loading system information..." Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="0">
             <!-- Page Title -->
             <TextBlock Text="Dashboard" Style="{StaticResource HeaderTextStyle}" Margin="0,0,0,20"/>
@@ -137,4 +146,5 @@
             </Border>
         </StackPanel>
     </ScrollViewer>
+    </Grid>
 </Page>

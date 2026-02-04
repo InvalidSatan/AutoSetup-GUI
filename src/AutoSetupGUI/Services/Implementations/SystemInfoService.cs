@@ -9,13 +9,18 @@ using Microsoft.Extensions.Logging;
 namespace AutoSetupGUI.Services.Implementations;
 
 /// <summary>
-/// Service for collecting comprehensive system information.
+/// Service for collecting comprehensive system information with caching support.
 /// </summary>
 public class SystemInfoService : ISystemInfoService
 {
     private readonly ILogger<SystemInfoService> _logger;
     private readonly WmiHelper _wmiHelper;
     private readonly RegistryHelper _registryHelper;
+
+    // Cache for system info to avoid repeated WMI queries
+    private SystemInfo? _cachedSystemInfo;
+    private DateTime _cacheExpiry = DateTime.MinValue;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
 
     public SystemInfoService(
         ILogger<SystemInfoService> logger,
@@ -27,8 +32,26 @@ public class SystemInfoService : ISystemInfoService
         _registryHelper = registryHelper;
     }
 
+    /// <summary>
+    /// Clears the cached system info to force fresh data collection.
+    /// </summary>
+    public void ClearCache()
+    {
+        _cachedSystemInfo = null;
+        _cacheExpiry = DateTime.MinValue;
+        _wmiHelper.ClearCache();
+        _logger.LogDebug("System info cache cleared");
+    }
+
     public async Task<SystemInfo> CollectSystemInfoAsync(CancellationToken cancellationToken = default)
     {
+        // Return cached info if still valid
+        if (_cachedSystemInfo != null && DateTime.Now < _cacheExpiry)
+        {
+            _logger.LogDebug("Returning cached system information");
+            return _cachedSystemInfo;
+        }
+
         _logger.LogInformation("Collecting system information...");
 
         var info = new SystemInfo
@@ -125,6 +148,10 @@ public class SystemInfoService : ISystemInfoService
             CollectSCCMInfo(info);
 
         }, cancellationToken);
+
+        // Cache the result
+        _cachedSystemInfo = info;
+        _cacheExpiry = DateTime.Now.Add(CacheDuration);
 
         _logger.LogInformation("System information collected successfully");
         return info;

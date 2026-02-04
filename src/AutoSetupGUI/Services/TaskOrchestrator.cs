@@ -162,20 +162,20 @@ public class TaskOrchestrator
                     cancellationToken);
             }
 
-            // Generate report
+            // Generate PDF report (faster to open than HTML)
             ReportProgress("Generating report...", 95);
             _loggingService.LogSection("Summary");
 
-            var htmlReport = await _reportService.GenerateHtmlReportAsync(
-                results.SystemInfo,
-                results.TaskResults,
-                results.ImageChecks);
-
             var reportPath = Path.Combine(
                 _loggingService.GetLocalLogPath(),
-                $"UniversityAutoSetup_Summary_{DateTime.Now:yyyyMMdd_HHmmss}.html");
+                $"UniversityAutoSetup_Summary_{DateTime.Now:yyyyMMdd_HHmmss}.pdf");
 
-            await _reportService.SaveHtmlReportAsync(htmlReport, reportPath);
+            await _reportService.GeneratePdfReportAsync(
+                results.SystemInfo,
+                results.TaskResults,
+                reportPath,
+                results.ImageChecks);
+
             results.ReportPath = reportPath;
 
             // Copy to network if available
@@ -185,7 +185,11 @@ public class TaskOrchestrator
                 try
                 {
                     var networkReportPath = Path.Combine(networkPath, Path.GetFileName(reportPath));
-                    await _reportService.SaveHtmlReportAsync(htmlReport, networkReportPath);
+                    await _reportService.GeneratePdfReportAsync(
+                        results.SystemInfo,
+                        results.TaskResults,
+                        networkReportPath,
+                        results.ImageChecks);
                 }
                 catch (Exception ex)
                 {

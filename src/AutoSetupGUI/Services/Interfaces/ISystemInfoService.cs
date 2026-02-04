@@ -31,6 +31,11 @@ public interface ISystemInfoService
     /// Exports system info to a file.
     /// </summary>
     Task ExportToFileAsync(SystemInfo info, string filePath, ExportFormat format);
+
+    /// <summary>
+    /// Clears the cached system info to force fresh data collection.
+    /// </summary>
+    void ClearCache();
 }
 
 /// <summary>

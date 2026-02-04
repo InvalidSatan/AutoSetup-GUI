@@ -113,8 +113,8 @@ public partial class TasksView : Page
                 _lastReportPath = results.ReportPath;
                 BtnViewReport.Visibility = Visibility.Visible;
 
-                // Auto-open the report in the default browser
-                _reportService.OpenInBrowser(results.ReportPath);
+                // Auto-open the PDF report (much faster than HTML in browser)
+                _reportService.OpenReport(results.ReportPath);
             }
 
             // Offer restart if needed
@@ -257,7 +257,7 @@ public partial class TasksView : Page
     {
         if (!string.IsNullOrEmpty(_lastReportPath) && System.IO.File.Exists(_lastReportPath))
         {
-            _reportService.OpenInBrowser(_lastReportPath);
+            _reportService.OpenReport(_lastReportPath);
         }
     }
 

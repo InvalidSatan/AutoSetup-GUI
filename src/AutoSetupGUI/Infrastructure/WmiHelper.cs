@@ -1,18 +1,47 @@
+using System.Collections.Concurrent;
 using System.Management;
 using Microsoft.Extensions.Logging;
 
 namespace AutoSetupGUI.Infrastructure;
 
 /// <summary>
-/// Helper class for Windows Management Instrumentation (WMI) queries.
+/// Helper class for Windows Management Instrumentation (WMI) queries with caching support.
 /// </summary>
 public class WmiHelper
 {
     private readonly ILogger<WmiHelper> _logger;
 
+    // Cache for expensive WMI query results
+    private readonly ConcurrentDictionary<string, object> _cache = new();
+    private DateTime _cacheExpiry = DateTime.MinValue;
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
     public WmiHelper(ILogger<WmiHelper> logger)
     {
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Clears the WMI cache to force fresh data retrieval.
+    /// </summary>
+    public void ClearCache()
+    {
+        _cache.Clear();
+        _cacheExpiry = DateTime.MinValue;
+        _logger.LogDebug("WMI cache cleared");
+    }
+
+    private bool IsCacheValid() => DateTime.Now < _cacheExpiry;
+
+    private T GetOrAddCached<T>(string key, Func<T> factory)
+    {
+        if (!IsCacheValid())
+        {
+            _cache.Clear();
+            _cacheExpiry = DateTime.Now.Add(CacheDuration);
+        }
+
+        return (T)_cache.GetOrAdd(key, _ => factory()!);
     }
 
     /// <summary>
@@ -99,224 +128,245 @@ public class WmiHelper
     }
 
     /// <summary>
-    /// Gets BIOS information.
+    /// Gets BIOS information (cached).
     /// </summary>
     public (string SerialNumber, string Version, string ReleaseDate) GetBiosInfo()
     {
-        try
+        return GetOrAddCached("BiosInfo", () =>
         {
-            foreach (var obj in Query("Win32_BIOS"))
+            try
             {
-                using (obj)
+                foreach (var obj in Query("Win32_BIOS"))
                 {
-                    var serialNumber = obj["SerialNumber"]?.ToString() ?? "Unknown";
-                    var version = obj["SMBIOSBIOSVersion"]?.ToString() ?? "Unknown";
-                    var releaseDate = obj["ReleaseDate"]?.ToString() ?? "Unknown";
-
-                    // Parse WMI datetime format
-                    if (releaseDate.Length >= 8)
+                    using (obj)
                     {
-                        releaseDate = $"{releaseDate.Substring(0, 4)}-{releaseDate.Substring(4, 2)}-{releaseDate.Substring(6, 2)}";
-                    }
+                        var serialNumber = obj["SerialNumber"]?.ToString() ?? "Unknown";
+                        var version = obj["SMBIOSBIOSVersion"]?.ToString() ?? "Unknown";
+                        var releaseDate = obj["ReleaseDate"]?.ToString() ?? "Unknown";
 
-                    return (serialNumber, version, releaseDate);
+                        // Parse WMI datetime format
+                        if (releaseDate.Length >= 8)
+                        {
+                            releaseDate = $"{releaseDate.Substring(0, 4)}-{releaseDate.Substring(4, 2)}-{releaseDate.Substring(6, 2)}";
+                        }
+
+                        return (serialNumber, version, releaseDate);
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting BIOS info");
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting BIOS info");
+            }
 
-        return ("Unknown", "Unknown", "Unknown");
+            return ("Unknown", "Unknown", "Unknown");
+        });
     }
 
     /// <summary>
-    /// Gets computer system information.
+    /// Gets computer system information (cached).
     /// </summary>
     public (string Manufacturer, string Model, string Domain, bool PartOfDomain) GetComputerSystemInfo()
     {
-        try
+        return GetOrAddCached("ComputerSystemInfo", () =>
         {
-            foreach (var obj in Query("Win32_ComputerSystem"))
+            try
             {
-                using (obj)
+                foreach (var obj in Query("Win32_ComputerSystem"))
                 {
-                    var manufacturer = obj["Manufacturer"]?.ToString() ?? "Unknown";
-                    var model = obj["Model"]?.ToString() ?? "Unknown";
-                    var domain = obj["Domain"]?.ToString() ?? "WORKGROUP";
-                    var partOfDomain = (bool)(obj["PartOfDomain"] ?? false);
+                    using (obj)
+                    {
+                        var manufacturer = obj["Manufacturer"]?.ToString() ?? "Unknown";
+                        var model = obj["Model"]?.ToString() ?? "Unknown";
+                        var domain = obj["Domain"]?.ToString() ?? "WORKGROUP";
+                        var partOfDomain = (bool)(obj["PartOfDomain"] ?? false);
 
-                    return (manufacturer, model, domain, partOfDomain);
+                        return (manufacturer, model, domain, partOfDomain);
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting computer system info");
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting computer system info");
+            }
 
-        return ("Unknown", "Unknown", "WORKGROUP", false);
+            return ("Unknown", "Unknown", "WORKGROUP", false);
+        });
     }
 
     /// <summary>
-    /// Gets operating system information.
+    /// Gets operating system information (cached).
     /// </summary>
     public (string Caption, string Version, string BuildNumber, string Architecture, DateTime LastBootTime) GetOperatingSystemInfo()
     {
-        try
+        return GetOrAddCached("OperatingSystemInfo", () =>
         {
-            foreach (var obj in Query("Win32_OperatingSystem"))
+            try
             {
-                using (obj)
+                foreach (var obj in Query("Win32_OperatingSystem"))
                 {
-                    var caption = obj["Caption"]?.ToString() ?? "Unknown";
-                    var version = obj["Version"]?.ToString() ?? "Unknown";
-                    var buildNumber = obj["BuildNumber"]?.ToString() ?? "Unknown";
-                    var architecture = obj["OSArchitecture"]?.ToString() ?? "Unknown";
-
-                    var lastBootStr = obj["LastBootUpTime"]?.ToString();
-                    var lastBoot = DateTime.Now;
-
-                    if (!string.IsNullOrEmpty(lastBootStr))
+                    using (obj)
                     {
-                        lastBoot = ManagementDateTimeConverter.ToDateTime(lastBootStr);
-                    }
+                        var caption = obj["Caption"]?.ToString() ?? "Unknown";
+                        var version = obj["Version"]?.ToString() ?? "Unknown";
+                        var buildNumber = obj["BuildNumber"]?.ToString() ?? "Unknown";
+                        var architecture = obj["OSArchitecture"]?.ToString() ?? "Unknown";
 
-                    return (caption, version, buildNumber, architecture, lastBoot);
+                        var lastBootStr = obj["LastBootUpTime"]?.ToString();
+                        var lastBoot = DateTime.Now;
+
+                        if (!string.IsNullOrEmpty(lastBootStr))
+                        {
+                            lastBoot = ManagementDateTimeConverter.ToDateTime(lastBootStr);
+                        }
+
+                        return (caption, version, buildNumber, architecture, lastBoot);
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting OS info");
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting OS info");
+            }
 
-        return ("Unknown", "Unknown", "Unknown", "Unknown", DateTime.Now);
+            return ("Unknown", "Unknown", "Unknown", "Unknown", DateTime.Now);
+        });
     }
 
     /// <summary>
-    /// Gets processor information.
+    /// Gets processor information (cached).
     /// </summary>
     public (string Name, int Cores, int LogicalProcessors) GetProcessorInfo()
     {
-        try
+        return GetOrAddCached("ProcessorInfo", () =>
         {
-            foreach (var obj in Query("Win32_Processor"))
+            try
             {
-                using (obj)
+                foreach (var obj in Query("Win32_Processor"))
                 {
-                    var name = obj["Name"]?.ToString()?.Trim() ?? "Unknown";
-                    var cores = Convert.ToInt32(obj["NumberOfCores"] ?? 0);
-                    var logicalProcessors = Convert.ToInt32(obj["NumberOfLogicalProcessors"] ?? 0);
-
-                    return (name, cores, logicalProcessors);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting processor info");
-        }
-
-        return ("Unknown", 0, 0);
-    }
-
-    /// <summary>
-    /// Gets total physical memory.
-    /// </summary>
-    public long GetTotalPhysicalMemory()
-    {
-        try
-        {
-            long total = 0;
-            foreach (var obj in Query("Win32_PhysicalMemory"))
-            {
-                using (obj)
-                {
-                    total += Convert.ToInt64(obj["Capacity"] ?? 0);
-                }
-            }
-            return total;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting physical memory");
-            return 0;
-        }
-    }
-
-    /// <summary>
-    /// Gets network adapter information.
-    /// </summary>
-    public IEnumerable<(string Name, string MacAddress, bool IsPhysical)> GetNetworkAdapters()
-    {
-        var results = new List<(string, string, bool)>();
-
-        try
-        {
-            foreach (var obj in Query("Win32_NetworkAdapter"))
-            {
-                using (obj)
-                {
-                    var macAddress = obj["MACAddress"]?.ToString();
-                    if (string.IsNullOrEmpty(macAddress))
-                        continue;
-
-                    var name = obj["Name"]?.ToString() ?? "Unknown Adapter";
-                    var isPhysical = (bool)(obj["PhysicalAdapter"] ?? false);
-
-                    // Filter for likely real adapters
-                    if (isPhysical &&
-                        (name.Contains("Ethernet", StringComparison.OrdinalIgnoreCase) ||
-                         name.Contains("Wi-Fi", StringComparison.OrdinalIgnoreCase) ||
-                         name.Contains("Wireless", StringComparison.OrdinalIgnoreCase) ||
-                         name.Contains("Intel", StringComparison.OrdinalIgnoreCase) ||
-                         name.Contains("Realtek", StringComparison.OrdinalIgnoreCase)))
+                    using (obj)
                     {
-                        results.Add((name, macAddress, isPhysical));
+                        var name = obj["Name"]?.ToString()?.Trim() ?? "Unknown";
+                        var cores = Convert.ToInt32(obj["NumberOfCores"] ?? 0);
+                        var logicalProcessors = Convert.ToInt32(obj["NumberOfLogicalProcessors"] ?? 0);
+
+                        return (name, cores, logicalProcessors);
                     }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting network adapters");
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting processor info");
+            }
 
-        return results;
+            return ("Unknown", 0, 0);
+        });
     }
 
     /// <summary>
-    /// Gets logical disk information.
+    /// Gets total physical memory (cached).
+    /// </summary>
+    public long GetTotalPhysicalMemory()
+    {
+        return GetOrAddCached("TotalPhysicalMemory", () =>
+        {
+            try
+            {
+                long total = 0;
+                foreach (var obj in Query("Win32_PhysicalMemory"))
+                {
+                    using (obj)
+                    {
+                        total += Convert.ToInt64(obj["Capacity"] ?? 0);
+                    }
+                }
+                return total;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting physical memory");
+                return 0L;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Gets network adapter information (cached).
+    /// </summary>
+    public IEnumerable<(string Name, string MacAddress, bool IsPhysical)> GetNetworkAdapters()
+    {
+        return GetOrAddCached("NetworkAdapters", () =>
+        {
+            var results = new List<(string, string, bool)>();
+
+            try
+            {
+                foreach (var obj in Query("Win32_NetworkAdapter"))
+                {
+                    using (obj)
+                    {
+                        var macAddress = obj["MACAddress"]?.ToString();
+                        if (string.IsNullOrEmpty(macAddress))
+                            continue;
+
+                        var name = obj["Name"]?.ToString() ?? "Unknown Adapter";
+                        var isPhysical = (bool)(obj["PhysicalAdapter"] ?? false);
+
+                        // Filter for likely real adapters
+                        if (isPhysical &&
+                            (name.Contains("Ethernet", StringComparison.OrdinalIgnoreCase) ||
+                             name.Contains("Wi-Fi", StringComparison.OrdinalIgnoreCase) ||
+                             name.Contains("Wireless", StringComparison.OrdinalIgnoreCase) ||
+                             name.Contains("Intel", StringComparison.OrdinalIgnoreCase) ||
+                             name.Contains("Realtek", StringComparison.OrdinalIgnoreCase)))
+                        {
+                            results.Add((name, macAddress, isPhysical));
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting network adapters");
+            }
+
+            return results;
+        });
+    }
+
+    /// <summary>
+    /// Gets logical disk information (cached).
     /// </summary>
     public IEnumerable<(string DriveLetter, string VolumeName, string FileSystem, long Size, long FreeSpace)> GetLogicalDisks()
     {
-        var results = new List<(string, string, string, long, long)>();
-
-        try
+        return GetOrAddCached("LogicalDisks", () =>
         {
-            // DriveType 3 = Local Disk
-            foreach (var obj in QueryWhere("Win32_LogicalDisk", "DriveType = 3"))
-            {
-                using (obj)
-                {
-                    var driveLetter = obj["DeviceID"]?.ToString() ?? "?:";
-                    var volumeName = obj["VolumeName"]?.ToString() ?? "";
-                    var fileSystem = obj["FileSystem"]?.ToString() ?? "Unknown";
-                    var size = Convert.ToInt64(obj["Size"] ?? 0);
-                    var freeSpace = Convert.ToInt64(obj["FreeSpace"] ?? 0);
+            var results = new List<(string, string, string, long, long)>();
 
-                    results.Add((driveLetter, volumeName, fileSystem, size, freeSpace));
+            try
+            {
+                // DriveType 3 = Local Disk
+                foreach (var obj in QueryWhere("Win32_LogicalDisk", "DriveType = 3"))
+                {
+                    using (obj)
+                    {
+                        var driveLetter = obj["DeviceID"]?.ToString() ?? "?:";
+                        var volumeName = obj["VolumeName"]?.ToString() ?? "";
+                        var fileSystem = obj["FileSystem"]?.ToString() ?? "Unknown";
+                        var size = Convert.ToInt64(obj["Size"] ?? 0);
+                        var freeSpace = Convert.ToInt64(obj["FreeSpace"] ?? 0);
+
+                        results.Add((driveLetter, volumeName, fileSystem, size, freeSpace));
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting logical disks");
-        }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting logical disks");
+            }
 
-        return results;
+            return results;
+        });
     }
 
     /// <summary>
