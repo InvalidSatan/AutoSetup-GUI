@@ -277,7 +277,7 @@ public static class NetworkResilienceManager
 
     /// <summary>
     /// Schedules cleanup of the local app folder after the application exits.
-    /// Uses a detached process to delete the folder since we can't delete ourselves while running.
+    /// Uses a Windows Scheduled Task for reliable cleanup even if files are briefly locked.
     /// </summary>
     public static void ScheduleSelfCleanup()
     {
@@ -286,125 +286,83 @@ public static class NetworkResilienceManager
             if (!Directory.Exists(LocalAppFolder))
                 return;
 
-            // Create a batch script that waits for this process to exit, then deletes the folder
-            var cleanupScriptPath = Path.Combine(Path.GetTempPath(), $"autosetup_cleanup_{Guid.NewGuid():N}.cmd");
             var cleanupLogPath = Path.Combine(Path.GetTempPath(), "autosetup_cleanup.log");
+            var taskName = "UniversityAutoSetupCleanup";
 
-            // Get current process ID to wait for
-            var currentPid = Process.GetCurrentProcess().Id;
-
-            // The script:
-            // 1. Waits a few seconds for the app to fully exit
-            // 2. Attempts to delete the app folder (with retries in case files are still locked)
-            // 3. Deletes the parent UniversityAutoSetup folder if empty
-            // 4. Logs results for debugging
-            // 5. Deletes itself
+            // Create a simple cleanup script
+            var cleanupScriptPath = Path.Combine(Path.GetTempPath(), "autosetup_cleanup.cmd");
             var script = $@"@echo off
 :: Cleanup script for University Auto Setup
 :: Log file: {cleanupLogPath}
 
-echo [%date% %time%] Cleanup script started >> ""{cleanupLogPath}""
-echo [%date% %time%] Target folder: {LocalAppFolder} >> ""{cleanupLogPath}""
-echo [%date% %time%] Waiting for PID {currentPid} to exit... >> ""{cleanupLogPath}""
+echo [%date% %time%] Scheduled cleanup starting >> ""{cleanupLogPath}""
+echo [%date% %time%] Target: {LocalAppFolder} >> ""{cleanupLogPath}""
 
-:: Wait longer for the application and all child windows to fully exit
-ping localhost -n 10 > nul
-
-:: Wait for process to exit (with timeout of ~60 seconds)
-set maxwait=30
-:waitloop
-if %maxwait%==0 (
-    echo [%date% %time%] Timeout waiting for process to exit >> ""{cleanupLogPath}""
-    goto trydelete
-)
-tasklist /FI ""PID eq {currentPid}"" 2>nul | find ""{currentPid}"" >nul
-if %errorlevel%==0 (
-    set /a maxwait=%maxwait%-1
-    ping localhost -n 2 > nul
-    goto waitloop
-)
-
-echo [%date% %time%] Process exited, waiting for file handles to release... >> ""{cleanupLogPath}""
-
-:: Wait additional time for file handles to be released (antivirus, etc.)
-ping localhost -n 10 > nul
-
-:trydelete
-:: First, log what processes have handles to files in this folder
-echo [%date% %time%] Checking for processes with handles to folder... >> ""{cleanupLogPath}""
-echo [%date% %time%] Files in folder: >> ""{cleanupLogPath}""
-dir /b ""{LocalAppFolder}"" >> ""{cleanupLogPath}"" 2>&1
-
-:: Use handle.exe if available, otherwise try openfiles
-where handle >nul 2>&1
-if %errorlevel%==0 (
-    echo [%date% %time%] Running handle.exe to find locks: >> ""{cleanupLogPath}""
-    handle ""{LocalAppFolder}"" >> ""{cleanupLogPath}"" 2>&1
-) else (
-    echo [%date% %time%] handle.exe not found, trying openfiles... >> ""{cleanupLogPath}""
-    openfiles /query /fo table 2>>""{cleanupLogPath}"" | findstr /i ""UniversityAutoSetup"" >> ""{cleanupLogPath}"" 2>&1
-)
-
-:: Try to delete individual files first to see which one fails
-echo [%date% %time%] Attempting to delete individual files... >> ""{cleanupLogPath}""
-for %%f in (""{LocalAppFolder}\*.*"") do (
-    del /f /q ""%%f"" 2>>""{cleanupLogPath}""
-    if exist ""%%f"" (
-        echo [%date% %time%] LOCKED: %%f >> ""{cleanupLogPath}""
-    ) else (
-        echo [%date% %time%] Deleted: %%f >> ""{cleanupLogPath}""
-    )
-)
-
-:: Try to delete the app folder (with more retries and longer delays)
-set retries=20
-:deleteloop
-if %retries%==0 (
-    echo [%date% %time%] Failed to delete after 20 retries >> ""{cleanupLogPath}""
-    goto cleanup
-)
-echo [%date% %time%] Delete attempt, retries remaining: %retries% >> ""{cleanupLogPath}""
+:: Delete the app folder
 rd /s /q ""{LocalAppFolder}"" 2>>""{cleanupLogPath}""
+
 if exist ""{LocalAppFolder}"" (
-    echo [%date% %time%] Folder still exists, retrying... >> ""{cleanupLogPath}""
-    set /a retries=%retries%-1
-    :: Wait 5 seconds between retries
-    ping localhost -n 6 > nul
-    goto deleteloop
+    echo [%date% %time%] First attempt failed, waiting and retrying... >> ""{cleanupLogPath}""
+    timeout /t 30 /nobreak > nul
+    rd /s /q ""{LocalAppFolder}"" 2>>""{cleanupLogPath}""
 )
 
-echo [%date% %time%] Successfully deleted app folder >> ""{cleanupLogPath}""
+if exist ""{LocalAppFolder}"" (
+    echo [%date% %time%] Second attempt failed, final retry... >> ""{cleanupLogPath}""
+    timeout /t 60 /nobreak > nul
+    rd /s /q ""{LocalAppFolder}"" 2>>""{cleanupLogPath}""
+)
 
-:cleanup
-:: Try to delete parent folder if empty
-rd ""{Path.GetDirectoryName(LocalAppFolder)}"" 2>nul
-if not exist ""{Path.GetDirectoryName(LocalAppFolder)}"" (
-    echo [%date% %time%] Successfully deleted parent folder >> ""{cleanupLogPath}""
+if not exist ""{LocalAppFolder}"" (
+    echo [%date% %time%] Successfully deleted app folder >> ""{cleanupLogPath}""
+    :: Try to delete parent folder if empty
+    rd ""{Path.GetDirectoryName(LocalAppFolder)}"" 2>nul
 ) else (
-    echo [%date% %time%] Parent folder not deleted (may not be empty) >> ""{cleanupLogPath}""
+    echo [%date% %time%] Failed to delete folder >> ""{cleanupLogPath}""
 )
 
-echo [%date% %time%] Cleanup script finished >> ""{cleanupLogPath}""
+:: Delete the scheduled task
+schtasks /delete /tn ""{taskName}"" /f >nul 2>&1
 
-:: Delete this script
-del ""%~f0""
+echo [%date% %time%] Cleanup finished >> ""{cleanupLogPath}""
 ";
 
             File.WriteAllText(cleanupScriptPath, script);
 
-            // Launch the cleanup script detached (no window, doesn't block)
-            var startInfo = new ProcessStartInfo
+            File.WriteAllText(cleanupScriptPath, script);
+
+            // Delete any existing cleanup task first
+            var deleteTaskInfo = new ProcessStartInfo
             {
-                FileName = "cmd.exe",
-                Arguments = $"/c \"{cleanupScriptPath}\"",
+                FileName = "schtasks",
+                Arguments = $"/delete /tn \"{taskName}\" /f",
                 UseShellExecute = false,
                 CreateNoWindow = true,
-                WindowStyle = ProcessWindowStyle.Hidden
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            try { Process.Start(deleteTaskInfo)?.WaitForExit(5000); } catch { }
+
+            // Schedule the cleanup to run 2 minutes from now using Windows Task Scheduler
+            // This runs in SYSTEM context which won't have the same file locks
+            var runTime = DateTime.Now.AddMinutes(2);
+            var scheduleTime = runTime.ToString("HH:mm");
+            var scheduleDate = runTime.ToString("MM/dd/yyyy");
+
+            var createTaskInfo = new ProcessStartInfo
+            {
+                FileName = "schtasks",
+                Arguments = $"/create /tn \"{taskName}\" /tr \"\\\"{cleanupScriptPath}\\\"\" /sc once /st {scheduleTime} /sd {scheduleDate} /f /rl highest",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
             };
 
-            Process.Start(startInfo);
+            var createProcess = Process.Start(createTaskInfo);
+            createProcess?.WaitForExit(10000);
 
-            Debug.WriteLine($"Scheduled cleanup script: {cleanupScriptPath}");
+            Debug.WriteLine($"Scheduled cleanup task '{taskName}' to run at {scheduleTime}");
             Debug.WriteLine($"Cleanup log will be at: {cleanupLogPath}");
         }
         catch (Exception ex)
