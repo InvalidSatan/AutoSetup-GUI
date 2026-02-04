@@ -28,6 +28,7 @@ public partial class TasksView : Page
     private readonly ObservableCollection<CompletedUpdateViewModel> _completedUpdates = new();
     private string? _lastReportPath;
     private bool _isRunning;
+    private bool _isInitialized;
 
     // State persistence for network resilience
     private TaskExecutionState? _currentState;
@@ -58,6 +59,12 @@ public partial class TasksView : Page
 
     private void TasksView_Loaded(object sender, RoutedEventArgs e)
     {
+        // Only initialize once to preserve state when switching tabs
+        if (_isInitialized)
+            return;
+
+        _isInitialized = true;
+
         // Load SCCM actions list with observable view models
         var actions = _sccmService.GetConfiguredActions();
         _sccmActionViewModels.Clear();
