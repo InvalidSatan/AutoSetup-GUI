@@ -333,4 +333,4 @@ src/AutoSetupGUI/bin/Release/net8.0-windows/win-x64/publish/
 
 Internal use only - Appalachian State University
 
-Copyright (c) 2024 Appalachian State University. All rights reserved.
+Copyright (c) 2026 Appalachian State University. All rights reserved.
